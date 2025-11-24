@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat IA - Estágio Probatório Play</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Paleta de Cores */
+        :root {
+            --ep-light-green: #92c040;
+            --ep-dark-green: #295b3e;
+            --ep-blue: #0076bb;
+            --ep-black: #141414;
+        }
+
+        body {
+            background-color: var(--ep-black);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Container de mensagens */
+        #chat-messages {
+            scrollbar-width: thin;
+            scrollbar-color: var(--ep-dark-green) var(--ep-black);
+        }
+
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-messages::-webkit-scrollbar-track {
+            background: var(--ep-black);
+        }
+
+        #chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--ep-dark-green);
+            border-radius: 4px;
+        }
+
+        /* Mensagens */
+        .message {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-user {
+            background-color: var(--ep-light-green);
+            color: var(--ep-dark-green);
+        }
+
+        .message-ai {
+            background-color: var(--ep-dark-green);
+            color: white;
+        }
+
+        .message-error {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        /* Indicador de digitação */
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+
+            30% {
+                opacity: 1;
+                transform: translateY(-8px);
+            }
+        }
+
+        /* Botão de enviar */
+        .btn-send {
+            background-color: var(--ep-light-green);
+            color: var(--ep-dark-green);
+            transition: all 0.2s;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            background-color: #aee050;
+            transform: scale(1.05);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Sugestões */
+        .suggestion-btn {
+            background-color: rgba(41, 91, 62, 0.3);
+            border: 1px solid var(--ep-dark-green);
+            color: var(--ep-light-green);
+            transition: all 0.2s;
+        }
+
+        .suggestion-btn:hover {
+            background-color: var(--ep-dark-green);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body class="text-white">
+
+    <!-- Navbar -->
+    <nav
+        class="p-4 flex justify-between items-center sticky top-0 z-50 bg-gradient-to-b from-black to-transparent backdrop-blur-sm">
+        <div class="flex items-center space-x-8">
+            <a href="index.html">
+                <img src="image_a285eb.png" alt="Estágio Probatório Play" class="h-10 w-auto">
+            </a>
+
+            <ul class="hidden md:flex space-x-4">
+                <li><a href="index.html" class="text-gray-300 hover:text-white">Início</a></li>
+                <li><a href="index.html#jogos" class="text-gray-300 hover:text-white">Jogos</a></li>
+                <li><a href="#" class="text-gray-300 hover:text-white">Documentação</a></li>
+                <li><a href="chat.html" class="font-bold text-white">Chat IA</a></li>
+                <li><a href="#" class="text-gray-300 hover:text-white">Sobre</a></li>
+            </ul>
+        </div>
+        <div class="text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zM12 12a10 10 0 110-20 10 10 0 010 20z" />
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-black mb-4" style="color: var(--ep-light-green);">
+                💬 Chat com IA
+            </h1>
+            <p class="text-gray-300 text-lg">
+                Faça perguntas sobre os dados do Estágio Probatório e receba respostas inteligentes
+            </p>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="bg-gray-900 rounded-lg shadow-2xl overflow-hidden"
+            style="height: 70vh; display: flex; flex-direction: column;">
+
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <!-- Mensagem de boas-vindas -->
+                <div class="message message-ai max-w-[80%] rounded-lg p-4 self-start">
+                    <p class="font-semibold mb-1">🤖 Assistente IA</p>
+                    <p>Olá! Sou seu assistente de dados do Estágio Probatório Play. Faça perguntas sobre os dados e eu
+                        vou te ajudar! 😊</p>
+                </div>
+
+                <!-- Sugestões iniciais -->
+                <div id="suggestions-container" class="flex flex-wrap gap-2 mt-4">
+                    <!-- Sugestões serão carregadas aqui via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="border-t border-gray-700 p-4 bg-gray-800">
+                <form id="chat-form" class="flex gap-2">
+                    <input type="text" id="message-input" placeholder="Digite sua pergunta..."
+                        class="flex-1 bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        maxlength="500" autocomplete="off">
+                    <button type="submit" id="send-button"
+                        class="btn-send px-6 py-3 rounded-lg font-bold flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                        <span>Enviar</span>
+                    </button>
+                </form>
+                <p class="text-gray-500 text-xs mt-2">
+                    💡 Dica: Seja específico em suas perguntas para obter melhores respostas
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center p-10 mt-10 border-t border-gray-800">
+        <p class="text-gray-400">&copy; 2025 Estágio Probatório Play. Todos os direitos reservados.</p>
+        <p class="text-gray-500 text-sm mt-2">Desenvolvido como parte da formação.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/chat.js"></script>
+</body>
+
+</html>

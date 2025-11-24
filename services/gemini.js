@@ -1,0 +1,165 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Inicializar Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+/**
+ * Processa uma pergunta do usuário e gera uma query SQL para BigQuery
+ * @param {string} userQuestion - Pergunta do usuário em linguagem natural
+ * @param {Object} schema - Schema das tabelas do BigQuery
+ * @returns {Promise<string>} Query SQL gerada
+ */
+async function generateSQLQuery(userQuestion, schema) {
+    try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+        const prompt = `Você é um assistente especializado em gerar queries SQL para BigQuery.
+
+SCHEMA DO BANCO DE DADOS:
+${JSON.stringify(schema, null, 2)}
+
+REGRAS IMPORTANTES:
+1. Gere APENAS a query SQL, sem explicações ou texto adicional
+2. Use apenas comandos SELECT (nunca DROP, DELETE, UPDATE, INSERT, ALTER, CREATE)
+3. Use a sintaxe padrão do BigQuery
+4. Se a pergunta não puder ser respondida com os dados disponíveis, retorne: "ERRO: Não é possível responder com os dados disponíveis"
+5. Sempre use nomes de tabelas totalmente qualificados: \`projeto.dataset.tabela\`
+6. Limite os resultados a no máximo 100 linhas com LIMIT 100
+
+PERGUNTA DO USUÁRIO:
+${userQuestion}
+
+QUERY SQL:`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let sqlQuery = response.text().trim();
+
+        // Remover markdown code blocks se existirem
+        sqlQuery = sqlQuery.replace(/```sql\n?/g, '').replace(/```\n?/g, '').trim();
+
+        return sqlQuery;
+    } catch (error) {
+        console.error('Erro ao gerar SQL com Gemini:', error);
+        throw new Error('Erro ao processar sua pergunta com IA');
+    }
+}
+
+/**
+ * Formata a resposta do BigQuery em linguagem natural
+ * @param {string} userQuestion - Pergunta original do usuário
+ * @param {Array} queryResults - Resultados da query do BigQuery
+ * @returns {Promise<string>} Resposta formatada em linguagem natural
+ */
+async function formatResponse(userQuestion, queryResults) {
+    try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+        const prompt = `Você é um assistente amigável do sistema Estágio Probatório Play.
+
+PERGUNTA DO USUÁRIO:
+${userQuestion}
+
+DADOS RETORNADOS DO BANCO:
+${JSON.stringify(queryResults, null, 2)}
+
+INSTRUÇÕES:
+1. Responda à pergunta do usuário de forma clara e amigável
+2. Use os dados fornecidos para criar uma resposta informativa
+3. Se houver números, apresente-os de forma legível (ex: "127 professores" em vez de "127")
+4. Se houver múltiplos resultados, organize-os de forma clara (use listas ou parágrafos)
+5. Seja conciso mas completo
+6. Use emojis quando apropriado para tornar a resposta mais amigável
+7. Se não houver dados, informe isso de forma educada
+
+RESPOSTA:`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text().trim();
+    } catch (error) {
+        console.error('Erro ao formatar resposta com Gemini:', error);
+        throw new Error('Erro ao formatar resposta');
+    }
+}
+
+/**
+ * Processa uma pergunta geral (não relacionada a dados)
+ * @param {string} userQuestion - Pergunta do usuário
+ * @returns {Promise<string>} Resposta da IA
+ */
+async function processGeneralQuestion(userQuestion) {
+    try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+        const prompt = `Você é um assistente amigável do sistema Estágio Probatório Play, uma plataforma educacional com jogos formativos.
+
+O sistema inclui:
+- Jogos educativos (Space Invaders Formativo, Tetris Formativo, Game Car Formativo, Clóvis)
+- Dashboard de dados e métricas
+- Sistema de chat com IA (você!)
+
+Responda à pergunta do usuário de forma amigável e útil. Se a pergunta for sobre dados ou métricas, sugira que o usuário faça uma pergunta específica sobre os dados.
+
+PERGUNTA DO USUÁRIO:
+${userQuestion}
+
+RESPOSTA:`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text().trim();
+    } catch (error) {
+        console.error('Erro ao processar pergunta geral com Gemini:', error);
+        throw new Error('Erro ao processar sua pergunta');
+    }
+}
+
+/**
+ * Detecta se a pergunta requer consulta ao banco de dados
+ * @param {string} userQuestion - Pergunta do usuário
+ * @returns {Promise<boolean>} True se requer consulta ao BD
+ */
+async function requiresDatabaseQuery(userQuestion) {
+    try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+        const prompt = `Analise se a pergunta abaixo requer consulta a um banco de dados ou pode ser respondida como uma conversa geral.
+
+Responda APENAS com "SIM" ou "NÃO".
+
+Exemplos de perguntas que requerem banco de dados (SIM):
+- "Quantos professores completaram o estágio?"
+- "Qual a média de notas?"
+- "Mostre os dados de 2024"
+- "Liste os professores aprovados"
+
+Exemplos de perguntas gerais (NÃO):
+- "Olá, como você está?"
+- "O que você pode fazer?"
+- "Como funciona o sistema?"
+- "Obrigado!"
+
+PERGUNTA:
+${userQuestion}
+
+RESPOSTA (SIM ou NÃO):`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const answer = response.text().trim().toUpperCase();
+
+        return answer.includes('SIM');
+    } catch (error) {
+        console.error('Erro ao detectar tipo de pergunta:', error);
+        // Em caso de erro, assume que requer consulta ao BD
+        return true;
+    }
+}
+
+module.exports = {
+    generateSQLQuery,
+    formatResponse,
+    processGeneralQuestion,
+    requiresDatabaseQuery
+};
