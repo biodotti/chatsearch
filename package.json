@@ -1,0 +1,31 @@
+{
+    "name": "estagio-probatorio-chat",
+    "version": "1.0.0",
+    "description": "Chat com Gemini AI e BigQuery para Estágio Probatório Play",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "keywords": [
+        "chat",
+        "gemini",
+        "bigquery",
+        "ai",
+        "education"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@google-cloud/bigquery": "^7.9.0",
+        "@google/generative-ai": "^0.21.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.21.1",
+        "express-rate-limit": "^7.4.1",
+        "helmet": "^8.0.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.7"
+    }
+}

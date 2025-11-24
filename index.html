@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estágio Probatório Play</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter (similar ao usado pela Netflix) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Paleta de Cores (baseado no logo) */
+        :root {
+            --ep-light-green: #92c040;
+            --ep-dark-green: #295b3e;
+            --ep-blue: #0076bb;
+            --ep-black: #141414;
+            /* Cor de fundo estilo Netflix */
+        }
+
+        body {
+            background-color: var(--ep-black);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Botão com a paleta de cores */
+        .btn-play {
+            background-color: var(--ep-light-green);
+            color: var(--ep-dark-green);
+        }
+
+        .btn-play:hover {
+            background-color: #aee050;
+            /* Um tom mais claro no hover */
+        }
+
+        /* Customização da Scrollbar (para o carrossel) */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            /* IE e Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+    </style>
+</head>
+
+<body class="text-white">
+
+    <!-- 1. Cabeçalho (Navbar) -->
+    <nav class="p-4 flex justify-between items-center sticky top-0 z-50 bg-gradient-to-b from-black to-transparent">
+        <div class="flex items-center space-x-8">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zM12 12a10 10 0 110-20 10 10 0 010 20z" />
+            </svg>
+        </div>
+    </nav>
+
+    <!-- 2. Hero Section (Destaque Principal) -->
+    <main>
+        <div class="relative h-[80vh] w-full flex items-end">
+            <!-- Imagem de Fundo do Destaque -->
+            <!-- !!! SUBSTITUA ESTE PLACEHOLDER por uma imagem 1200x600 do seu jogo 'Space Invaders Formativo' !!! -->
+            <img src="https://placehold.co/1600x800/295b3e/92c040?text=Space+Invaders+Formativo+(1600x800)"
+                alt="Jogo em Destaque: Space Invaders Formativo"
+                class="absolute top-0 left-0 w-full h-full object-cover -z-10">
+
+            <!-- Gradiente Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+
+            <!-- Conteúdo do Destaque -->
+            <div class="relative z-10 p-10 md:p-16 max-w-2xl">
+                <h1 class="text-5xl md:text-6xl font-black" style="color: var(--ep-light-green);">Space Invaders
+                    Formativo</h1>
+                <p class="text-lg mt-4 mb-6">
+                    Assuma o controle e defenda a inovação contra os obstáculos que ameaçam a educação digital!
+                    Colete componentes, desvie de ataques e enfrente o chefe final.
+                </p>
+                <a href="index.html" target="_blank"
+                    class="btn-play font-bold text-lg px-10 py-3 rounded-md inline-flex items-center space-x-2 transition-transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                    <span>Jogar</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- 3. Carrossel de Jogos -->
+    <section class="px-10 md:px-16 py-8">
+        <h2 class="text-2xl font-bold mb-4">Todos os Módulos</h2>
+
+        <div class="flex space-x-4 overflow-x-auto scrollbar-hide pb-4">
+
+            <!-- Jogo 1: Space Invaders Formativo -->
+            <a href="index.html" target="_blank"
+                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
+                style="background-color: var(--ep-dark-green);">
+                <!-- !!! SUBSTITUA ESTE PLACEHOLDER por uma imagem 300x450 do seu jogo 'Space Invaders Formativo' !!! -->
+                <img src="https://placehold.co/300x450/295b3e/92c040?text=Space+Invaders+Formativo+(300x450)"
+                    alt="Space Invaders Formativo" class="w-full h-full object-cover">
+                <!-- Overlay de Hover -->
+                <div
+                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Jogo 2: Tetris Formativo -->
+            <a href="tetris.html" target="_blank"
+                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
+                style="background-color: var(--ep-dark-green);">
+                <!-- !!! SUBSTITUA ESTE PLACEHOLDER por uma imagem 300x450 do seu jogo 'Tetris Formativo' !!! -->
+                <img src="https://placehold.co/300x450/295b3e/92c040?text=Tetris+Formativo+(300x450)"
+                    alt="Tetris Formativo" class="w-full h-full object-cover">
+                <!-- Overlay de Hover -->
+                <div
+                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Jogo 3: Game Car Formativo -->
+            <a href="carro.html" target="_blank"
+                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
+                style="background-color: var(--ep-dark-green);">
+                <!-- !!! SUBSTITUA ESTE PLACEHOLDER por uma imagem 300x450 do seu 'Game Car Formativo' !!! -->
+                <img src="https://placehold.co/300x450/295b3e/92c040?text=Game+Car+Formativo+(300x450)"
+                    alt="Game Car Formativo" class="w-full h-full object-cover">
+                <!-- Overlay de Hover -->
+                <div
+                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Jogo 4: Clóvis -->
+            <a href="clovis.html" target="_blank"
+                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
+                style="background-color: var(--ep-dark-green);">
+                <!-- !!! SUBSTITUA ESTE PLACEHOLDER por uma imagem 300x450 do seu jogo 'Clóvis' !!! -->
+                <img src="https://placehold.co/300x450/295b3e/92c040?text=Clóvis+(300x450)" alt="Clóvis"
+                    class="w-full h-full object-cover">
+                <!-- Overlay de Hover -->
+                <div
+                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Módulos Futuros (Exemplos) -->
+            <div class="relative flex-shrink-0 w-60 h-[360px] rounded-lg overflow-hidden"
+                style="background-color: #222;">
+                <img src="https://placehold.co/300x450/222222/555555?text=Em+Breve..." alt="Jogo Futuro"
+                    class="w-full h-full object-cover opacity-30">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-gray-400">Em Breve...</span>
+                </div>
+            </div>
+            <div class="relative flex-shrink-0 w-60 h-[360px] rounded-lg overflow-hidden"
+                style="background-color: #222;">
+                <img src="https://placehold.co/300x450/222222/555555?text=Em+Breve..." alt="Jogo Futuro"
+                    class="w-full h-full object-cover opacity-30">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-gray-400">Em Breve...</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 4. Footer -->
+    <footer class="text-center p-10 mt-10 border-t border-gray-800">
+        <p class="text-gray-400">&copy; 2025 Estágio Probatório Play. Todos os direitos reservados.</p>
+        <p class="text-gray-500 text-sm mt-2">Desenvolvido como parte da formação.</p>
+    </footer>
+
+</body>
+
+</html>
