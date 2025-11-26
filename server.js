@@ -8,6 +8,8 @@ const path = require('path');
 const chatRoutes = require('./routes/chat');
 
 const app = express();
+// Corrige erro de proxy no Render para express-rate-limit
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
