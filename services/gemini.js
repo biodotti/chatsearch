@@ -83,10 +83,14 @@ async function generateSQLQuery(userQuestion, schema) {
         // Compactar schema
         function compactSchema(inputSchema) {
             try {
-                const out = { dataset: inputSchema.dataset || '', tables: {} };
+                const out = { 
+                    dataset: inputSchema.dataset || '', 
+                    tables_available: Object.keys(inputSchema.tables || []),
+                    tables: {} 
+                };
                 for (const [tableName, tableInfo] of Object.entries(inputSchema.tables || {})) {
                     out.tables[tableName] = {
-                        fields: (tableInfo.fields || []).slice(0, 15).map(f => ({ name: f.name, type: f.type }))
+                        fields: (tableInfo.fields || []).slice(0, 20).map(f => ({ name: f.name, type: f.type }))
                     };
                 }
                 return out;
@@ -99,19 +103,22 @@ async function generateSQLQuery(userQuestion, schema) {
 
         // Instruções de Sistema (System Instruction)
         const systemInstruction = `Você é um especialista em BigQuery SQL.
-        SCHEMA: ${JSON.stringify(smallSchema)}
         
-        REGRAS:
-        1. Gere APENAS o código SQL puro.
-        2. NÃO use formatação Markdown (\`\`\`sql). Retorne apenas o texto da query.
-        3. Use \`projeto.dataset.tabela\` completos.
-        4. Use LIMIT 100.
-        5. Se impossível responder, retorne: "ERRO: [Motivo]".
-        6. A data atual é ${new Date().toISOString().split('T')[0]}.`;
+SCHEMA (${Object.keys(smallSchema.tables || {}).length} tabelas):
+${JSON.stringify(smallSchema)}
+
+REGRAS:
+1. Tabelas disponíveis: ${Object.keys(smallSchema.tables || {}).join(', ')}
+2. Gere APENAS código SQL puro, sem explicações ou Markdown.
+3. Use nomes totalmente qualificados: \`dashboard-educacao-ep-pr.dados_formacao.tabela\`
+4. Sempre use LIMIT 100 no final.
+5. Se impossível responder, retorne: "ERRO: [Razão]"
+6. Suporte operações: COUNT, SUM, AVG, GROUP BY, ORDER BY, WHERE, JOINs.
+7. Data atual: ${new Date().toISOString().split('T')[0]}`;
 
         const model = genAI.getGenerativeModel({ 
             model: modelName,
-            systemInstruction: systemInstruction // Recurso novo do Gemini 1.5
+            systemInstruction: systemInstruction
         });
 
         const result = await model.generateContent(userQuestion);
