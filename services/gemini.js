@@ -9,10 +9,10 @@ if (!process.env.GEMINI_API_KEY) {
     console.warn('Configure GEMINI_API_KEY no painel do Render para que o chat funcione corretamente.');
 }
 
-// Cache do nome do modelo (reseta a cada 5 minutos para evitar ficar preso em modelo sobrecarregado)
+// Cache do nome do modelo (reseta a cada 1 minuto para melhor flexibilidade)
 let _cachedModelName = null;
 let _cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const CACHE_DURATION = 1 * 60 * 1000; // 1 minuto
 
 async function getModelName() {
     // Verificar se cache ainda é válido
