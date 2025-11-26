@@ -130,8 +130,15 @@ Exemplos de queries válidas:
         const response = await result.response;
         let sqlQuery = response.text().trim();
 
+        console.log('SQL gerado (bruto):', sqlQuery.substring(0, 200)); // Log primeiros 200 chars
+
         // Limpeza de segurança (caso o modelo ainda use markdown)
         sqlQuery = sqlQuery.replace(/```sql/g, '').replace(/```/g, '').trim();
+
+        if (!sqlQuery || sqlQuery.startsWith('ERRO')) {
+            console.error('IA retornou erro ou vazio:', sqlQuery);
+            throw new Error('IA não conseguiu gerar query válida: ' + (sqlQuery || 'resposta vazia'));
+        }
 
         return sqlQuery;
     } catch (error) {
