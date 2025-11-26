@@ -20,9 +20,12 @@ async function getModelName() {
         const candidates = [
             process.env.GEMINI_MODEL, // opcional override via env
             // Preferir modelo mais barato e eficiente
-                'gemini-2.5-flash-lite',
-                'models/gemini-2.5-flash-lite',
-            // Fallbacks
+            'gemini-2.5-flash-lite',
+            'models/gemini-2.5-flash-lite',
+            // Fallbacks quando flash-lite está sobrecarregado
+            'gemini-1.5-pro',
+            'gemini-1.5-flash',
+            // Outros
             'gemini-pro',
             'gemini-1',
             'gemini-1.0',
