@@ -9,281 +9,214 @@ if (!process.env.GEMINI_API_KEY) {
     console.warn('Configure GEMINI_API_KEY no painel do Render para que o chat funcione corretamente.');
 }
 
-// Detectar e cachear um modelo compatível (evita hardcode que pode quebrar entre versões)
+// Cache do nome do modelo
 let _cachedModelName = null;
+
 async function getModelName() {
     if (_cachedModelName) return _cachedModelName;
 
-    const candidates = [
-        process.env.GEMINI_MODEL, // opcional override via env
-        'gemini-pro',
-        'gemini-1',
-        'gemini-1.0',
-        'models/gemini-1.0',
-        'text-bison@001',
-        'text-bison-001',
-        'chat-bison@001',
-        'chat-bison'
-    ].filter(Boolean);
+    // LISTA ATUALIZADA (2025)
+    // Prioridade: Flash (Rapidez) -> Pro (Inteligência) -> 1.0 (Legado Estável)
+        const candidates = [
+            process.env.GEMINI_MODEL, // opcional override via env
+            // Preferir modelo mais barato e eficiente
+            'models/gemini-2.5-flash-lite',
+            // Fallbacks
+            'gemini-pro',
+            'gemini-1',
+            'gemini-1.0',
+            'models/gemini-1.0',
+            'text-bison@001',
+            'text-bison-001',
+            'chat-bison@001',
+            'chat-bison'
+        ].filter(Boolean);
 
-    // 1) Tentar listar modelos se API expõe essa função
-    try {
-        if (typeof genAI.listModels === 'function') {
-            const list = await genAI.listModels();
-            const modelsList = (list && (list.models || list)) || [];
-            const names = modelsList.map(m => (m && (m.name || m.model || m.id)) || String(m));
-            const prefer = names.find(n => /gemini|bison|chat/i.test(n));
-            if (prefer) {
-                _cachedModelName = prefer;
-                console.log('✅ Gemini: selecionado modelo via listModels ->', _cachedModelName);
-                return _cachedModelName;
-            }
-        }
-    } catch (err) {
-        console.warn('⚠️ Gemini listModels falhou:', err && (err.message || err));
-    }
-
-    // 2) Tentar candidatos na ordem até encontrar um que responda sem 404
+    // 1) Tentar candidatos na ordem até encontrar um que funcione
     for (const candidate of candidates) {
         try {
+            // Teste simples para validar o modelo
             const model = genAI.getGenerativeModel({ model: candidate });
-            // Fazer uma chamada rápida e curta para validar o modelo
-            const probe = await model.generateContent('Responda apenas: OK');
-            // aguardar a resposta pode falhar para modelos que não suportam generateContent
+            const probe = await model.generateContent('Ok');
             await probe.response;
+            
             _cachedModelName = candidate;
-            console.log('✅ Gemini: selecionado modelo candidato ->', _cachedModelName);
+            console.log('✅ Gemini: selecionado modelo ->', _cachedModelName);
             return _cachedModelName;
         } catch (err) {
-            console.warn('Modelo candidato falhou:', candidate, err && (err.message || err));
+            // Ignora erro e tenta o próximo (ex: 404 se o modelo não existir na região)
             continue;
         }
     }
 
-    throw new Error('Nenhum modelo Gemini compatível encontrado. Verifique GEMINI_API_KEY/GEMINI_MODEL e versão da biblioteca.');
+    // Fallback final: Tentar listar modelos dinamicamente se tudo falhar
+    try {
+        if (typeof genAI.listModels === 'function') {
+            const list = await genAI.listModels();
+            const modelsList = (list && (list.models || list)) || [];
+            // Procura qualquer modelo que contenha "gemini" e suporte "generateContent"
+            const fallback = modelsList.find(m => 
+                m.name.includes('gemini') && 
+                m.supportedGenerationMethods.includes('generateContent')
+            );
+            if (fallback) {
+                _cachedModelName = fallback.name.replace('models/', '');
+                console.log('✅ Gemini: selecionado fallback via listModels ->', _cachedModelName);
+                return _cachedModelName;
+            }
+        }
+    } catch (e) {
+        console.warn('Falha ao listar modelos:', e.message);
+    }
+
+    throw new Error('Nenhum modelo Gemini compatível encontrado. Verifique sua API Key.');
 }
 
 /**
  * Processa uma pergunta do usuário e gera uma query SQL para BigQuery
- * @param {string} userQuestion - Pergunta do usuário em linguagem natural
- * @param {Object} schema - Schema das tabelas do BigQuery
- * @returns {Promise<string>} Query SQL gerada
  */
 async function generateSQLQuery(userQuestion, schema) {
     try {
-        if (!process.env.GEMINI_API_KEY) {
-            throw new Error('GEMINI_API_KEY não está configurada. Configure no painel do Render.');
-        }
-
         const modelName = await getModelName();
-        const model = genAI.getGenerativeModel({ model: modelName });
-
-        // Para evitar prompts excessivamente grandes, compactamos o schema
+        
+        // Compactar schema
         function compactSchema(inputSchema) {
             try {
-                const out = { dataset: inputSchema.dataset, project: inputSchema.project, tables: {} };
+                const out = { dataset: inputSchema.dataset || '', tables: {} };
                 for (const [tableName, tableInfo] of Object.entries(inputSchema.tables || {})) {
                     out.tables[tableName] = {
-                        fields: (tableInfo.fields || []).slice(0, 8).map(f => ({ name: f.name, type: f.type }))
+                        fields: (tableInfo.fields || []).slice(0, 15).map(f => ({ name: f.name, type: f.type }))
                     };
                 }
                 return out;
             } catch (e) {
-                return { dataset: inputSchema.dataset || '', project: inputSchema.project || '', tables: Object.keys(inputSchema.tables || {}) };
+                return { tables: Object.keys(inputSchema.tables || {}) };
             }
         }
 
         const smallSchema = compactSchema(schema);
 
-        const prompt = `Você é um assistente especializado em gerar queries SQL para BigQuery.
+        // Instruções de Sistema (System Instruction)
+        const systemInstruction = `Você é um especialista em BigQuery SQL.
+        SCHEMA: ${JSON.stringify(smallSchema)}
+        
+        REGRAS:
+        1. Gere APENAS o código SQL puro.
+        2. NÃO use formatação Markdown (\`\`\`sql). Retorne apenas o texto da query.
+        3. Use \`projeto.dataset.tabela\` completos.
+        4. Use LIMIT 100.
+        5. Se impossível responder, retorne: "ERRO: [Motivo]".
+        6. A data atual é ${new Date().toISOString().split('T')[0]}.`;
 
-SCHEMA DO BANCO DE DADOS (resumido):
-${JSON.stringify(smallSchema, null, 2)}
+        const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            systemInstruction: systemInstruction // Recurso novo do Gemini 1.5
+        });
 
-REGRAS IMPORTANTES:
-1. Gere APENAS a query SQL, sem explicações ou texto adicional
-2. Use apenas comandos SELECT (nunca DROP, DELETE, UPDATE, INSERT, ALTER, CREATE)
-3. Use a sintaxe padrão do BigQuery
-4. Se a pergunta não puder ser respondida com os dados disponíveis, retorne: "ERRO: Não é possível responder com os dados disponíveis"
-5. Sempre use nomes de tabelas totalmente qualificados: \`projeto.dataset.tabela\`
-6. Limite os resultados a no máximo 100 linhas com LIMIT 100
-
-PERGUNTA DO USUÁRIO:
-${userQuestion}
-
-QUERY SQL:`;
-
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(userQuestion);
         const response = await result.response;
         let sqlQuery = response.text().trim();
 
-        // Remover markdown code blocks se existirem
-        sqlQuery = sqlQuery.replace(/```sql\n?/g, '').replace(/```\n?/g, '').trim();
+        // Limpeza de segurança (caso o modelo ainda use markdown)
+        sqlQuery = sqlQuery.replace(/```sql/g, '').replace(/```/g, '').trim();
 
         return sqlQuery;
     } catch (error) {
-        console.error('Erro ao gerar SQL com Gemini:', error);
-        throw new Error('Erro ao processar sua pergunta com IA');
+        console.error('Erro SQL Gemini:', error);
+        return "ERRO: Falha na geração da query.";
     }
 }
 
 /**
  * Formata a resposta do BigQuery em linguagem natural
- * @param {string} userQuestion - Pergunta original do usuário
- * @param {Array} queryResults - Resultados da query do BigQuery
- * @returns {Promise<string>} Resposta formatada em linguagem natural
  */
 async function formatResponse(userQuestion, queryResults) {
     try {
         const modelName = await getModelName();
-        const model = genAI.getGenerativeModel({ model: modelName });
+        
+        const systemInstruction = `Você é o assistente do sistema "Estágio Probatório Play".
+        Seja amigável, direto e use emojis.
+        Analise os DADOS fornecidos e responda à PERGUNTA do usuário.`;
 
-        const prompt = `Você é um assistente amigável do sistema Estágio Probatório Play.
+        const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            systemInstruction: systemInstruction 
+        });
 
-PERGUNTA DO USUÁRIO:
-${userQuestion}
-
-DADOS RETORNADOS DO BANCO:
-${JSON.stringify(queryResults, null, 2)}
-
-INSTRUÇÕES:
-1. Responda à pergunta do usuário de forma clara e amigável
-2. Use os dados fornecidos para criar uma resposta informativa
-3. Se houver números, apresente-os de forma legível (ex: "127 professores" em vez de "127")
-4. Se houver múltiplos resultados, organize-os de forma clara (use listas ou parágrafos)
-5. Seja conciso mas completo
-6. Use emojis quando apropriado para tornar a resposta mais amigável
-7. Se não houver dados, informe isso de forma educada
-
-RESPOSTA:`;
+        const prompt = `PERGUNTA: ${userQuestion}\n\nDADOS: ${JSON.stringify(queryResults, null, 2)}`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text().trim();
+        return (await result.response).text().trim();
     } catch (error) {
-        console.error('Erro ao formatar resposta com Gemini:', error);
-        throw new Error('Erro ao formatar resposta');
+        console.error('Erro formatResponse:', error);
+        return "Aqui estão os dados encontrados: " + JSON.stringify(queryResults);
     }
 }
 
 /**
- * Processa uma pergunta geral (não relacionada a dados)
- * @param {string} userQuestion - Pergunta do usuário
- * @returns {Promise<string>} Resposta da IA
+ * Processa uma pergunta geral
  */
 async function processGeneralQuestion(userQuestion) {
     try {
         const modelName = await getModelName();
-        const model = genAI.getGenerativeModel({ model: modelName });
+        const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            systemInstruction: "Você é um assistente amigável do sistema educacional 'Estágio Probatório Play'. O sistema tem jogos (Space Invaders, Tetris) e métricas. Se perguntarem de dados específicos, peça para serem mais detalhados."
+        });
 
-        const prompt = `Você é um assistente amigável do sistema Estágio Probatório Play, uma plataforma educacional com jogos formativos.
-
-O sistema inclui:
-- Jogos educativos (Space Invaders Formativo, Tetris Formativo, Game Car Formativo, Clóvis)
-- Dashboard de dados e métricas
-- Sistema de chat com IA (você!)
-
-Responda à pergunta do usuário de forma amigável e útil. Se a pergunta for sobre dados ou métricas, sugira que o usuário faça uma pergunta específica sobre os dados.
-
-PERGUNTA DO USUÁRIO:
-${userQuestion}
-
-RESPOSTA:`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text().trim();
+        const result = await model.generateContent(userQuestion);
+        return (await result.response).text().trim();
     } catch (error) {
-        console.error('Erro ao processar pergunta geral com Gemini:', error);
-        throw new Error('Erro ao processar sua pergunta');
+        return "Desculpe, estou tendo dificuldades para responder agora.";
     }
 }
 
 /**
  * Detecta se a pergunta requer consulta ao banco de dados
- * @param {string} userQuestion - Pergunta do usuário
- * @returns {Promise<boolean>} True se requer consulta ao BD
  */
 async function requiresDatabaseQuery(userQuestion) {
     try {
         const modelName = await getModelName();
-        const model = genAI.getGenerativeModel({ model: modelName });
+        // Usamos responseMimeType para forçar JSON, garantindo true/false
+        const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
-        const prompt = `Analise se a pergunta abaixo requer consulta a um banco de dados ou pode ser respondida como uma conversa geral.
-
-Responda APENAS com "SIM" ou "NÃO".
-
-Exemplos de perguntas que requerem banco de dados (SIM):
-- "Quantos professores completaram o estágio?"
-- "Qual a média de notas?"
-- "Mostre os dados de 2024"
-- "Liste os professores aprovados"
-
-Exemplos de perguntas gerais (NÃO):
-- "Olá, como você está?"
-- "O que você pode fazer?"
-- "Como funciona o sistema?"
-- "Obrigado!"
-
-PERGUNTA:
-${userQuestion}
-
-RESPOSTA (SIM ou NÃO):`;
+        const prompt = `Analise a pergunta: "${userQuestion}"
+        Ela requer consulta SQL a um banco de dados de usuários/notas/jogos?
+        Responda APENAS com este JSON: { "requires_db": boolean }`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const answer = response.text().trim().toUpperCase();
-
-        return answer.includes('SIM');
+        const text = (await result.response).text();
+        const json = JSON.parse(text);
+        
+        return json.requires_db === true;
     } catch (error) {
-        console.error('Erro ao detectar tipo de pergunta:', error);
-        // Em caso de erro, assume que requer consulta ao BD
-        return true;
+        // Fallback seguro: na dúvida, tenta consultar o banco se parecer uma pergunta complexa
+        return userQuestion.length > 10;
     }
 }
 
 /**
- * Processa uma mensagem do usuário: detecta se é pergunta sobre dados e processa com Gemini + BigQuery
- * @param {string} userQuestion - Pergunta do usuário
- * @param {Object} schema - Schema das tabelas do BigQuery
- * @param {Function} executeQueryFunc - Função para executar queries no BigQuery
- * @returns {Promise<Object>} Resultado com success, message, sql e data
+ * Processa mensagem principal
  */
 async function processMessage(userQuestion, schema, executeQueryFunc) {
     try {
-        // Detectar se requer consulta ao BD
         const needsDatabase = await requiresDatabaseQuery(userQuestion);
 
         if (!needsDatabase) {
-            // Resposta geral, sem dados
             const response = await processGeneralQuestion(userQuestion);
-            return {
-                success: true,
-                message: response,
-                sql: null,
-                data: null,
-                type: 'general'
-            };
+            return { success: true, message: response, sql: null, data: null, type: 'general' };
         }
 
-        // Gerar SQL com Gemini
         const sqlQuery = await generateSQLQuery(userQuestion, schema);
 
-        // Verificar se gerou erro
-        if (sqlQuery.includes('ERRO:')) {
-            return {
-                success: false,
-                message: sqlQuery,
-                sql: null,
-                data: null,
-                type: 'error'
-            };
+        if (sqlQuery.startsWith('ERRO')) {
+            return { success: false, message: sqlQuery, type: 'error' };
         }
 
-        // Executar query no BigQuery
         const queryResults = await executeQueryFunc(sqlQuery);
-
-        // Formatar resposta com Gemini
         const formattedResponse = await formatResponse(userQuestion, queryResults);
 
         return {
@@ -294,68 +227,46 @@ async function processMessage(userQuestion, schema, executeQueryFunc) {
             type: 'data'
         };
     } catch (error) {
-        console.error('Erro ao processar mensagem com Gemini:', error && (error.stack || error.message || error));
-        // Retornar erro estruturado para a rota consumir e exibir mensagem amigável
-        return {
-            success: false,
-            message: 'Erro ao processar sua pergunta com IA',
-            error: (error && error.message) ? error.message : 'Erro desconhecido'
-        };
+        console.error('Erro processMessage:', error);
+        return { success: false, message: 'Erro interno ao processar IA.', error: error.message };
     }
 }
 
 /**
- * Gera sugestões de perguntas baseadas no schema do BigQuery
- * @param {Object} schema - Schema das tabelas do BigQuery
- * @returns {Promise<Array>} Array de sugestões de perguntas
+ * Gera sugestões usando JSON MODE (Recurso 1.5)
  */
 async function generateSuggestions(schema) {
     try {
         const modelName = await getModelName();
-        const model = genAI.getGenerativeModel({ model: modelName });
+        
+        // Compactar schema apenas com nomes das tabelas e colunas principais
+        const simplifiedSchema = Object.keys(schema.tables || {}).map(t => ({
+            table: t,
+            columns: (schema.tables[t].fields || []).map(f => f.name).slice(0, 5)
+        }));
 
-        // Usar schema compactado para evitar prompts muito grandes
-        function compactSchemaForSuggestions(inputSchema) {
-            try {
-                const out = { dataset: inputSchema.dataset, tables: {} };
-                for (const [tableName, tableInfo] of Object.entries(inputSchema.tables || {})) {
-                    out.tables[tableName] = (tableInfo.fields || []).slice(0, 6).map(f => f.name);
-                }
-                return out;
-            } catch (e) {
-                return { dataset: inputSchema.dataset || '', tables: Object.keys(inputSchema.tables || {}) };
-            }
-        }
+        const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            // FORÇA O RETORNO EM JSON (Disponível no Gemini 1.5 Flash/Pro)
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
-        const smallSchema = compactSchemaForSuggestions(schema);
-
-        const prompt = `Com base no seguinte schema de banco de dados (resumido), gere 4 sugestões de perguntas inteligentes que um usuário poderia fazer. As sugestões devem ser práticas, úteis e variadas.
-
-SCHEMA (resumido):
-${JSON.stringify(smallSchema, null, 2)}
-
-Retorne as sugestões como um array JSON simples com strings, nada mais. Exemplo: ["Pergunta 1", "Pergunta 2", "Pergunta 3", "Pergunta 4"]
-
-SUGESTÕES:`;
+        const prompt = `Com base neste schema: ${JSON.stringify(simplifiedSchema)}
+        Gere 4 perguntas curtas e analíticas que um gestor faria.
+        Retorne APENAS um array de strings JSON. 
+        Exemplo: ["Pergunta 1", "Pergunta 2"]`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let suggestionsText = response.text().trim();
+        const jsonResponse = JSON.parse((await result.response).text());
+        
+        // O modelo pode retornar { "questions": [...] } ou direto [...]
+        if (Array.isArray(jsonResponse)) return jsonResponse;
+        if (jsonResponse.questions) return jsonResponse.questions;
+        return Object.values(jsonResponse)[0] || [];
 
-        // Remover markdown code blocks se existirem
-        suggestionsText = suggestionsText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-        // Tentar parsear como JSON
-        try {
-            const suggestions = JSON.parse(suggestionsText);
-            return Array.isArray(suggestions) ? suggestions : [suggestionsText];
-        } catch {
-            // Se não for JSON válido, retornar como string única
-            return [suggestionsText];
-        }
     } catch (error) {
-        console.error('Erro ao gerar sugestões com Gemini:', error);
-        throw error;
+        console.error('Erro sugestões:', error);
+        return ["Quantos usuários ativos?", "Qual a média de notas?", "Quem jogou hoje?"];
     }
 }
 
