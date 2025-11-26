@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estágio Probatório Play</title>
+    <title>Chat IA - Estágio Probatório Play</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
@@ -13,12 +13,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* Paleta de Cores */
+        /* Paleta de Cores - Estágio Probatório */
         :root {
-            --ep-light-green: #92c040;
-            --ep-dark-green: #295b3e;
+            --ep-green: #22c55e;
             --ep-blue: #0076bb;
-            --ep-black: #141414;
+            --ep-dark-green: #166534;
+            --ep-light-green: #86efac;
+            --ep-black: #0f172a;
         }
 
         body {
@@ -26,31 +27,122 @@
             font-family: 'Inter', sans-serif;
         }
 
-        .btn-play {
-            background-color: var(--ep-light-green);
+        /* Container de mensagens */
+        #chat-messages {
+            scrollbar-width: thin;
+            scrollbar-color: var(--ep-green) var(--ep-black);
+        }
+
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-messages::-webkit-scrollbar-track {
+            background: var(--ep-black);
+        }
+
+        #chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--ep-green);
+            border-radius: 4px;
+        }
+
+        /* Mensagens */
+        .message {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-user {
+            background-color: var(--ep-green);
             color: var(--ep-dark-green);
         }
 
-        .btn-play:hover {
-            background-color: #aee050;
-        }
-
-        .btn-chat {
-            background-color: var(--ep-blue);
+        .message-ai {
+            background-color: var(--ep-dark-green);
             color: white;
         }
 
-        .btn-chat:hover {
-            background-color: #0091e6;
+        .message-error {
+            background-color: #dc2626;
+            color: white;
         }
 
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        /* Indicador de digitação */
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
         }
 
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-8px);
+            }
+        }
+
+        /* Botão de enviar */
+        .btn-send {
+            background-color: var(--ep-green);
+            color: var(--ep-dark-green);
+            transition: all 0.2s;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            background-color: var(--ep-light-green);
+            transform: scale(1.05);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Sugestões */
+        .suggestion-btn {
+            background-color: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--ep-green);
+            color: var(--ep-light-green);
+            transition: all 0.2s;
+        }
+
+        .suggestion-btn:hover {
+            background-color: var(--ep-dark-green);
+            border-color: var(--ep-light-green);
+            transform: translateY(-2px);
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, var(--ep-dark-green) 0%, var(--ep-blue) 100%);
         }
     </style>
 </head>
@@ -58,189 +150,83 @@
 <body class="text-white">
 
     <!-- Navbar -->
-    <nav
-        class="p-4 flex justify-between items-center sticky top-0 z-50 bg-gradient-to-b from-black to-transparent backdrop-blur-sm">
-        <div class="flex items-center space-x-8">
-            <img src="image_a285eb.png" alt="Estágio Probatório Play" class="h-10 w-auto">
-
-            <ul class="hidden md:flex space-x-4">
-                <li><a href="index.html" class="font-bold text-white">Início</a></li>
-                <li><a href="#jogos" class="text-gray-300 hover:text-white">Jogos</a></li>
-                <li><a href="#" class="text-gray-300 hover:text-white">Documentação</a></li>
-                <li><a href="public/chat.html" class="text-gray-300 hover:text-white">💬 Chat IA</a></li>
-                <li><a href="#" class="text-gray-300 hover:text-white">Sobre</a></li>
-            </ul>
+    <nav class="gradient-header p-4 flex justify-between items-center sticky top-0 z-50 shadow-lg">
+        <div class="flex items-center space-x-4">
+            <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" class="h-12 w-auto">
+                <text x="10" y="35" font-size="28" font-weight="bold" fill="#22c55e">ESTÁGIO</text>
+                <text x="10" y="55" font-size="20" font-weight="bold" fill="#0076bb">PROBATÓRIO</text>
+            </svg>
+            <h1 class="text-xl font-bold text-green-300 hidden md:block">Chat IA</h1>
         </div>
-        <div class="text-gray-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
+        <div class="text-green-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zM12 12a10 10 0 110-20 10 10 0 010 20z" />
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
         </div>
     </nav>
 
-    <!-- Hero Section com 2 Opções -->
-    <main>
-        <div class="container mx-auto px-10 md:px-16 py-16">
-            <h1 class="text-5xl md:text-6xl font-black text-center mb-4" style="color: var(--ep-light-green);">
-                Estágio Probatório Play
-            </h1>
-            <p class="text-center text-gray-300 text-xl mb-12">
-                Escolha sua experiência de aprendizado
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-5xl h-screen flex flex-col">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h2 class="text-3xl md:text-4xl font-black mb-2" style="color: var(--ep-green);">
+                Olá! Bem-vindo ao Chat IA 👋
+            </h2>
+            <p class="text-gray-300">
+                Faça perguntas sobre os dados do Estágio Probatório e receba respostas inteligentes
             </p>
+        </div>
 
-            <!-- Grid com 2 Cards -->
-            <div class="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        <!-- Chat Container -->
+        <div class="bg-gradient-to-b from-gray-900 to-gray-950 rounded-xl shadow-2xl overflow-hidden flex-1 flex flex-col border border-gray-800">
 
-                <!-- Card 1: Jogos -->
-                <div
-                    class="bg-gradient-to-br from-green-900 to-green-950 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 border border-green-700">
-                    <div class="text-center mb-6">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto mb-4"
-                            style="color: var(--ep-light-green);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h2 class="text-3xl font-bold mb-3" style="color: var(--ep-light-green);">Jogos Formativos</h2>
-                        <p class="text-gray-300 mb-6">
-                            Aprenda jogando! Explore nossos jogos educativos interativos sobre o estágio probatório.
-                        </p>
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
+                <!-- Mensagem de boas-vindas com personagem -->
+                <div class="flex items-start gap-4 max-w-[80%]">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='25' fill='%2386efac'/%3E%3Cpath d='M30 60 Q50 75 70 60' stroke='%2322c55e' stroke-width='3' fill='none'/%3E%3Ccircle cx='40' cy='35' r='3' fill='%23166534'/%3E%3Ccircle cx='60' cy='35' r='3' fill='%23166534'/%3E%3C/svg%3E" alt="Assistente IA" class="w-12 h-12 rounded-full flex-shrink-0">
+                    <div class="message message-ai rounded-lg p-4 bg-gradient-to-r from-green-900 to-blue-900">
+                        <p class="font-semibold mb-2" style="color: var(--ep-light-green);">Assistente IA</p>
+                        <p>Olá! 👋 Sou seu assistente de dados do Estágio Probatório Play. Faça perguntas sobre os dados e vou te ajudar!</p>
                     </div>
-                    <a href="#jogos"
-                        class="btn-play w-full font-bold text-lg px-8 py-4 rounded-lg inline-flex items-center justify-center space-x-2 transition-transform hover:scale-105">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"></path>
-                        </svg>
-                        <span>Explorar Jogos</span>
-                    </a>
                 </div>
 
-                <!-- Card 2: Chat IA -->
-                <div
-                    class="bg-gradient-to-br from-blue-900 to-blue-950 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 border border-blue-700">
-                    <div class="text-center mb-6">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto mb-4"
-                            style="color: var(--ep-blue);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        <h2 class="text-3xl font-bold mb-3" style="color: var(--ep-blue);">Chat com IA</h2>
-                        <p class="text-gray-300 mb-6">
-                            Faça perguntas sobre dados do estágio probatório e receba respostas inteligentes em tempo
-                            real.
-                        </p>
-                    </div>
-                    <a href="public/chat.html"
-                        class="btn-chat w-full font-bold text-lg px-8 py-4 rounded-lg inline-flex items-center justify-center space-x-2 transition-transform hover:scale-105">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <span>Abrir Chat</span>
-                    </a>
+                <!-- Sugestões iniciais -->
+                <div id="suggestions-container" class="flex flex-wrap gap-2 mt-4 self-start w-full">
+                    <!-- Sugestões serão carregadas aqui via JavaScript -->
                 </div>
+            </div>
 
+            <!-- Input Area -->
+            <div class="border-t border-gray-700 p-4 bg-gray-800">
+                <form id="chat-form" class="flex gap-2">
+                    <input type="text" id="message-input" placeholder="Digite sua pergunta..."
+                        class="flex-1 bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400"
+                        maxlength="500" autocomplete="off">
+                    <button type="submit" id="send-button"
+                        class="btn-send px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                        <span>Enviar</span>
+                    </button>
+                </form>
+                <p class="text-gray-500 text-xs mt-2">
+                    💡 Dica: Seja específico em suas perguntas para obter melhores respostas
+                </p>
             </div>
         </div>
     </main>
 
-    <!-- Carrossel de Jogos -->
-    <section id="jogos" class="px-10 md:px-16 py-8">
-        <h2 class="text-2xl font-bold mb-4">Todos os Módulos</h2>
-
-        <div class="flex space-x-4 overflow-x-auto scrollbar-hide pb-4">
-
-            <!-- Jogo 1: Space Invaders -->
-            <a href="index.html" target="_blank"
-                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
-                style="background-color: var(--ep-dark-green);">
-                <img src="https://placehold.co/300x450/295b3e/92c040?text=Space+Invaders+Formativo+(300x450)"
-                    alt="Space Invaders Formativo" class="w-full h-full object-cover">
-                <div
-                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
-                        viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"></path>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- Jogo 2: Tetris -->
-            <a href="tetris.html" target="_blank"
-                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
-                style="background-color: var(--ep-dark-green);">
-                <img src="https://placehold.co/300x450/295b3e/92c040?text=Tetris+Formativo+(300x450)"
-                    alt="Tetris Formativo" class="w-full h-full object-cover">
-                <div
-                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
-                        viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"></path>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- Jogo 3: Game Car -->
-            <a href="carro.html" target="_blank"
-                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
-                style="background-color: var(--ep-dark-green);">
-                <img src="https://placehold.co/300x450/295b3e/92c040?text=Game+Car+Formativo+(300x450)"
-                    alt="Game Car Formativo" class="w-full h-full object-cover">
-                <div
-                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
-                        viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"></path>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- Jogo 4: Clóvis -->
-            <a href="clovis.html" target="_blank"
-                class="group relative flex-shrink-0 w-60 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:z-10"
-                style="background-color: var(--ep-dark-green);">
-                <img src="https://placehold.co/300x450/295b3e/92c040?text=Clóvis+(300x450)" alt="Clóvis"
-                    class="w-full h-full object-cover">
-                <div
-                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="currentColor"
-                        viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"></path>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- Módulos Futuros -->
-            <div class="relative flex-shrink-0 w-60 h-[360px] rounded-lg overflow-hidden"
-                style="background-color: #222;">
-                <img src="https://placehold.co/300x450/222222/555555?text=Em+Breve..." alt="Jogo Futuro"
-                    class="w-full h-full object-cover opacity-30">
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="text-gray-400">Em Breve...</span>
-                </div>
-            </div>
-            <div class="relative flex-shrink-0 w-60 h-[360px] rounded-lg overflow-hidden"
-                style="background-color: #222;">
-                <img src="https://placehold.co/300x450/222222/555555?text=Em+Breve..." alt="Jogo Futuro"
-                    class="w-full h-full object-cover opacity-30">
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="text-gray-400">Em Breve...</span>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
     <!-- Footer -->
-    <footer class="text-center p-10 mt-10 border-t border-gray-800">
-        <p class="text-gray-400">&copy; 2025 Estágio Probatório Play. Todos os direitos reservados.</p>
-        <p class="text-gray-500 text-sm mt-2">Desenvolvido como parte da formação.</p>
+    <footer class="text-center p-6 border-t border-gray-800">
+        <p class="text-gray-400 text-sm">&copy; 2025 Estágio Probatório Play. Todos os direitos reservados.</p>
     </footer>
 
+    <!-- JavaScript -->
+    <script src="public/js/chat.js"></script>
 </body>
 
 </html>

@@ -13,12 +13,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* Paleta de Cores */
+        /* Paleta de Cores - Estágio Probatório */
         :root {
-            --ep-light-green: #92c040;
-            --ep-dark-green: #295b3e;
+            --ep-green: #22c55e;
             --ep-blue: #0076bb;
-            --ep-black: #141414;
+            --ep-dark-green: #166534;
+            --ep-light-green: #86efac;
+            --ep-black: #0f172a;
         }
 
         body {
@@ -149,26 +150,21 @@
 <body class="text-white">
 
     <!-- Navbar -->
-    <nav
-        class="p-4 flex justify-between items-center sticky top-0 z-50 bg-gradient-to-b from-black to-transparent backdrop-blur-sm">
-        <div class="flex items-center space-x-8">
-            <a href="index.html">
-                <img src="image_a285eb.png" alt="Estágio Probatório Play" class="h-10 w-auto">
+    <nav class="bg-gradient-to-r from-green-900 to-blue-900 p-4 flex justify-between items-center sticky top-0 z-50 shadow-lg">
+        <div class="flex items-center space-x-4">
+            <a href="/">
+                <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" class="h-12 w-auto">
+                    <text x="10" y="35" font-size="28" font-weight="bold" fill="#22c55e">ESTÁGIO</text>
+                    <text x="10" y="55" font-size="20" font-weight="bold" fill="#0076bb">PROBATÓRIO</text>
+                </svg>
             </a>
-
-            <ul class="hidden md:flex space-x-4">
-                <li><a href="index.html" class="text-gray-300 hover:text-white">Início</a></li>
-                <li><a href="index.html#jogos" class="text-gray-300 hover:text-white">Jogos</a></li>
-                <li><a href="#" class="text-gray-300 hover:text-white">Documentação</a></li>
-                <li><a href="chat.html" class="font-bold text-white">Chat IA</a></li>
-                <li><a href="#" class="text-gray-300 hover:text-white">Sobre</a></li>
-            </ul>
+            <h1 class="text-xl font-bold text-green-300 hidden md:block">Chat IA</h1>
         </div>
-        <div class="text-gray-300">
+        <div class="text-green-300">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zM12 12a10 10 0 110-20 10 10 0 010 20z" />
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
         </div>
     </nav>
@@ -177,7 +173,7 @@
     <main class="container mx-auto px-4 py-8 max-w-5xl">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-black mb-4" style="color: var(--ep-light-green);">
+            <h1 class="text-4xl md:text-5xl font-black mb-4" style="color: var(--ep-green);">
                 💬 Chat com IA
             </h1>
             <p class="text-gray-300 text-lg">
@@ -186,20 +182,22 @@
         </div>
 
         <!-- Chat Container -->
-        <div class="bg-gray-900 rounded-lg shadow-2xl overflow-hidden"
-            style="height: 70vh; display: flex; flex-direction: column;">
+        <div class="bg-gradient-to-b from-gray-900 to-gray-950 rounded-xl shadow-2xl overflow-hidden flex-1 flex flex-col border border-gray-800"
+            style="display: flex; flex-direction: column;">
 
             <!-- Messages Area -->
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
-                <!-- Mensagem de boas-vindas -->
-                <div class="message message-ai max-w-[80%] rounded-lg p-4 self-start">
-                    <p class="font-semibold mb-1">🤖 Assistente IA</p>
-                    <p>Olá! Sou seu assistente de dados do Estágio Probatório Play. Faça perguntas sobre os dados e eu
-                        vou te ajudar! 😊</p>
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
+                <!-- Mensagem de boas-vindas com personagem -->
+                <div class="flex items-start gap-4 max-w-[80%]">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='25' fill='%2386efac'/%3E%3Cpath d='M30 60 Q50 75 70 60' stroke='%2322c55e' stroke-width='3' fill='none'/%3E%3Ccircle cx='40' cy='35' r='3' fill='%23166534'/%3E%3Ccircle cx='60' cy='35' r='3' fill='%23166534'/%3E%3C/svg%3E" alt="Assistente IA" class="w-12 h-12 rounded-full flex-shrink-0">
+                    <div class="message message-ai max-w-[80%] rounded-lg p-4 bg-gradient-to-r from-green-900 to-blue-900">
+                        <p class="font-semibold mb-2" style="color: var(--ep-light-green);">Assistente IA</p>
+                        <p>Olá! 👋 Sou seu assistente de dados do Estágio Probatório Play. Faça perguntas sobre os dados e vou te ajudar!</p>
+                    </div>
                 </div>
 
                 <!-- Sugestões iniciais -->
-                <div id="suggestions-container" class="flex flex-wrap gap-2 mt-4">
+                <div id="suggestions-container" class="flex flex-wrap gap-2 mt-4 self-start w-full">
                     <!-- Sugestões serão carregadas aqui via JavaScript -->
                 </div>
             </div>
