@@ -79,6 +79,35 @@ app.get('/api/health', async (req, res) => {
     }
 });
 
+// Debug seguro das variáveis de ambiente (não retorna conteúdo sensível)
+app.get('/api/debug/credentials-status', (req, res) => {
+    try {
+        const hasGoogleCredentials = !!process.env.GOOGLE_CREDENTIALS;
+        let googleCredentialsValid = false;
+
+        if (hasGoogleCredentials) {
+            try {
+                JSON.parse(process.env.GOOGLE_CREDENTIALS);
+                googleCredentialsValid = true;
+            } catch (err) {
+                googleCredentialsValid = false;
+            }
+        }
+
+        res.json({
+            success: true,
+            hasGoogleCredentials,
+            googleCredentialsValid,
+            gcpProjectIdSet: !!process.env.GCP_PROJECT_ID,
+            bigqueryDatasetSet: !!process.env.BIGQUERY_DATASET,
+            geminiApiKeySet: !!process.env.GEMINI_API_KEY
+        });
+    } catch (error) {
+        console.error('Erro no debug de credenciais:', error);
+        res.status(500).json({ success: false, error: 'Erro ao verificar credenciais' });
+    }
+});
+
 // Rota padrão para servir index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
