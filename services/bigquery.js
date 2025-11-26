@@ -4,16 +4,23 @@ const { BigQuery } = require('@google-cloud/bigquery');
 let bigquery;
 let credentialsConfigured = false;
 
+// Escopos necessários para acessar BigQuery e tabelas externas (Drive/Sheets)
+const scopes = [
+    'https://www.googleapis.com/auth/bigquery',
+    'https://www.googleapis.com/auth/drive'
+];
+
 if (process.env.GOOGLE_CREDENTIALS) {
     // Em produção (Render, Vercel, etc) - credenciais via variável de ambiente
     try {
         const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
         bigquery = new BigQuery({
             projectId: process.env.GCP_PROJECT_ID,
-            credentials: credentials
+            credentials: credentials,
+            scopes: scopes
         });
         credentialsConfigured = true;
-        console.log('✅ BigQuery inicializado com GOOGLE_CREDENTIALS');
+        console.log('✅ BigQuery inicializado com GOOGLE_CREDENTIALS e escopos de Drive');
     } catch (error) {
         console.error('❌ Erro ao parsear GOOGLE_CREDENTIALS:', error.message);
         bigquery = null;
@@ -23,10 +30,11 @@ if (process.env.GOOGLE_CREDENTIALS) {
     try {
         bigquery = new BigQuery({
             projectId: process.env.GCP_PROJECT_ID,
-            keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
+            keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+            scopes: scopes
         });
         credentialsConfigured = true;
-        console.log('✅ BigQuery inicializado com arquivo de credenciais');
+        console.log('✅ BigQuery inicializado com arquivo de credenciais e escopos de Drive');
     } catch (error) {
         console.error('❌ Erro ao inicializar BigQuery com arquivo:', error.message);
         bigquery = null;
@@ -212,11 +220,30 @@ async function testConnection() {
     }
 }
 
+/**
+ * Obtém o email da Service Account configurada
+ * @returns {string} Email da service account ou mensagem de erro
+ */
+function getServiceAccountEmail() {
+    try {
+        if (process.env.GOOGLE_CREDENTIALS) {
+            const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+            return creds.client_email || 'Email não encontrado no JSON';
+        } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+            return 'Usando arquivo local (GOOGLE_APPLICATION_CREDENTIALS)';
+        }
+        return 'Nenhuma credencial configurada';
+    } catch (error) {
+        return 'Erro ao ler credenciais: ' + error.message;
+    }
+}
+
 module.exports = {
     executeQuery,
     validateQuery,
     getTableSchema,
     listTables,
     getDatasetSchema,
-    testConnection
+    testConnection,
+    getServiceAccountEmail
 };

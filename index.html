@@ -10,219 +10,334 @@
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* Paleta de Cores - Estágio Probatório */
+        /* Paleta de Cores - Estágio Probatório (Azul) */
         :root {
-            --ep-green: #22c55e;
             --ep-blue: #0076bb;
-            --ep-dark-green: #166534;
-            --ep-light-green: #86efac;
-            --ep-black: #0f172a;
+            --ep-blue-dark: #005a8f;
+            --ep-blue-light: #e6f3fa;
+            --chat-bg: #e5ddd5;
+            /* Cor clássica de fundo de chat */
+            --msg-sent: #0076bb;
+            --msg-received: #ffffff;
         }
 
         body {
-            background-color: var(--ep-black);
             font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* Container de mensagens */
-        #chat-messages {
-            scrollbar-width: thin;
-            scrollbar-color: var(--ep-green) var(--ep-black);
+        /* Scrollbar personalizada fina */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
         }
 
-        #chat-messages::-webkit-scrollbar {
-            width: 8px;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        #chat-messages::-webkit-scrollbar-track {
-            background: var(--ep-black);
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
         }
 
-        #chat-messages::-webkit-scrollbar-thumb {
-            background-color: var(--ep-green);
-            border-radius: 4px;
+        /* Balões de Mensagem */
+        .message-bubble {
+            position: relative;
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+            font-size: 15px;
+            line-height: 1.4;
+            margin-bottom: 2px;
         }
 
-        /* Mensagens */
-        .message {
-            animation: slideIn 0.3s ease-out;
+        .msg-sent {
+            background-color: var(--msg-sent);
+            color: white;
+            align-self: flex-end;
+            border-top-right-radius: 0;
         }
 
-        @keyframes slideIn {
+        .msg-sent::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: -8px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-top-color: var(--msg-sent);
+            border-left: 0;
+            border-bottom: 0;
+            margin-top: 0;
+            margin-right: 0;
+        }
+
+        .msg-received {
+            background-color: var(--msg-received);
+            color: #111b21;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+
+        .msg-received::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-top-color: var(--msg-received);
+            border-right: 0;
+            border-bottom: 0;
+            margin-top: 0;
+            margin-left: 0;
+        }
+
+        /* Fundo do chat com padrão sutil */
+        .chat-background {
+            background-color: #efeae2;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%230076bb' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        /* Animação de entrada */
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .message-user {
-            background-color: var(--ep-green);
-            color: var(--ep-dark-green);
-        }
-
-        .message-ai {
-            background-color: var(--ep-dark-green);
-            color: white;
-        }
-
-        .message-error {
-            background-color: #dc2626;
-            color: white;
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
         }
 
         /* Indicador de digitação */
-        .typing-indicator {
-            display: inline-flex;
-            gap: 4px;
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
         }
 
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            background-color: white;
-            border-radius: 50%;
-            animation: typing 1.4s infinite;
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
         }
 
         .typing-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .typing-dot:nth-child(3) {
-            animation-delay: 0.4s;
+            animation-delay: -0.16s;
         }
 
         @keyframes typing {
-            0%, 60%, 100% {
-                opacity: 0.3;
-                transform: translateY(0);
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
             }
-            30% {
-                opacity: 1;
-                transform: translateY(-8px);
+
+            40% {
+                transform: scale(1);
             }
-        }
-
-        /* Botão de enviar */
-        .btn-send {
-            background-color: var(--ep-green);
-            color: var(--ep-dark-green);
-            transition: all 0.2s;
-        }
-
-        .btn-send:hover:not(:disabled) {
-            background-color: var(--ep-light-green);
-            transform: scale(1.05);
-        }
-
-        .btn-send:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Sugestões */
-        .suggestion-btn {
-            background-color: rgba(34, 197, 94, 0.1);
-            border: 1px solid var(--ep-green);
-            color: var(--ep-light-green);
-            transition: all 0.2s;
-        }
-
-        .suggestion-btn:hover {
-            background-color: var(--ep-dark-green);
-            border-color: var(--ep-light-green);
-            transform: translateY(-2px);
-        }
-
-        .gradient-header {
-            background: linear-gradient(135deg, var(--ep-dark-green) 0%, var(--ep-blue) 100%);
         }
     </style>
 </head>
 
-<body class="text-white">
+<body class="flex h-screen overflow-hidden">
 
-    <!-- Navbar -->
-    <nav class="gradient-header p-4 flex justify-between items-center sticky top-0 z-50 shadow-lg">
-        <div class="flex items-center space-x-4">
-            <img src="https://www.educacao.pr.gov.br/sites/default/arquivos_restritos/files/imagem/2025-07/estagio-probatorio690x311.png" alt="Estágio Probatório" class="h-12 w-auto">
+    <!-- Sidebar (Lista de Contatos) -->
+    <aside
+        class="w-full md:w-[400px] bg-white border-r border-gray-200 flex flex-col z-20 absolute md:relative h-full transition-transform transform md:translate-x-0 -translate-x-full"
+        id="sidebar">
+        <!-- Header Sidebar -->
+        <header class="bg-[#f0f2f5] p-4 flex justify-between items-center border-b border-gray-200 h-[60px]">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-300 overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Usuario&background=random" alt="User"
+                        class="w-full h-full object-cover">
+                </div>
+                <span class="font-semibold text-gray-700">Você</span>
+            </div>
+            <div class="flex gap-4 text-gray-500">
+                <button title="Nova Conversa"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg></button>
+                <button title="Menu"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg></button>
+            </div>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="p-2 border-b border-gray-100 bg-white">
+            <div class="bg-[#f0f2f5] rounded-lg flex items-center px-4 py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 mr-3" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" placeholder="Pesquisar ou começar uma nova conversa"
+                    class="bg-transparent w-full focus:outline-none text-sm text-gray-700">
+            </div>
         </div>
-        <div class="text-green-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-5xl h-screen flex flex-col">
-        <!-- Header -->
-        <div class="text-center mb-6">
-            <h2 class="text-3xl md:text-4xl font-black mb-2" style="color: var(--ep-green);">
-                Olá! Bem-vindo ao Chat do Estágio Probatório 👋
-            </h2>
-            <p class="text-gray-300">
-                Faça perguntas sobre os dados do Estágio Probatório e receba respostas inteligentes
-            </p>
-        </div>
-
-        <!-- Chat Container -->
-        <div class="bg-gradient-to-b from-gray-900 to-gray-950 rounded-xl shadow-2xl overflow-hidden flex-1 flex flex-col border border-gray-800">
-
-            <!-- Messages Area -->
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
-                <!-- Mensagem de boas-vindas com personagem -->
-                <div class="flex items-start gap-4 max-w-[80%]">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='25' fill='%2386efac'/%3E%3Cpath d='M30 60 Q50 75 70 60' stroke='%2322c55e' stroke-width='3' fill='none'/%3E%3Ccircle cx='40' cy='35' r='3' fill='%23166534'/%3E%3Ccircle cx='60' cy='35' r='3' fill='%23166534'/%3E%3C/svg%3E" alt="Clóvis" class="w-12 h-12 rounded-full flex-shrink-0">
-                    <div class="message message-ai rounded-lg p-4 bg-gradient-to-r from-green-900 to-blue-900">
-                        <p class="font-semibold mb-2" style="color: var(--ep-light-green);">Clóvis</p>
-                        <p>Olá, sou seu assistente de dados do Estágio Probatório. Irei lhe ajudar com as informações disponíveis em nosso Data Studio!</p>
+        <!-- Contact List -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            <!-- Contato Ativo: Clóvis -->
+            <div class="flex items-center p-3 bg-[#f0f2f5] cursor-pointer hover:bg-[#f5f6f6] border-b border-gray-100">
+                <div class="w-12 h-12 rounded-full overflow-hidden mr-3 flex-shrink-0 relative">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='25' fill='%2386efac'/%3E%3Cpath d='M30 60 Q50 75 70 60' stroke='%2322c55e' stroke-width='3' fill='none'/%3E%3Ccircle cx='40' cy='35' r='3' fill='%23166534'/%3E%3Ccircle cx='60' cy='35' r='3' fill='%23166534'/%3E%3C/svg%3E"
+                        alt="Clóvis" class="w-full h-full object-cover bg-white">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-baseline mb-1">
+                        <h3 class="font-medium text-gray-900 truncate">Clóvis (IA)</h3>
+                        <span class="text-xs text-gray-500">Agora</span>
                     </div>
-                </div>
-
-                <!-- Sugestões iniciais -->
-                <div id="suggestions-container" class="flex flex-wrap gap-2 mt-4 self-start w-full">
-                    <!-- Sugestões serão carregadas aqui via JavaScript -->
+                    <p class="text-sm text-gray-500 truncate">Olá! Sou seu assistente de dados...</p>
                 </div>
             </div>
 
-            <!-- Input Area -->
-            <div class="border-t border-gray-700 p-4 bg-gray-800">
-                <form id="chat-form" class="flex gap-2">
-                    <input type="text" id="message-input" placeholder="Digite sua pergunta..."
-                        class="flex-1 bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400"
-                        maxlength="500" autocomplete="off">
-                    <button type="submit" id="send-button"
-                        class="btn-send px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                        </svg>
-                        <span>Enviar</span>
-                    </button>
-                </form>
-                <p class="text-gray-500 text-xs mt-2">
-                    💡 Dica: Seja específico em suas perguntas para obter melhores respostas
-                </p>
+            <!-- Outros Contatos (Exemplo) -->
+            <div class="flex items-center p-3 cursor-pointer hover:bg-[#f5f6f6] border-b border-gray-100 opacity-60">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-3 text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-baseline mb-1">
+                        <h3 class="font-medium text-gray-900 truncate">Jogos Formativos</h3>
+                        <span class="text-xs text-gray-500">Ontem</span>
+                    </div>
+                    <p class="text-sm text-gray-500 truncate">Acesse os jogos educativos</p>
+                </div>
             </div>
         </div>
-    </main>
+    </aside>
 
-    <!-- Footer -->
-    <footer class="text-center p-6 border-t border-gray-800">
-        <p class="text-gray-400 text-sm">&copy; 2025 Estágio Probatório. Todos os direitos reservados.</p>
-    </footer>
+    <!-- Área Principal do Chat -->
+    <main class="flex-1 flex flex-col relative w-full h-full">
+        <!-- Header Chat -->
+        <header class="bg-[#f0f2f5] p-3 flex items-center justify-between border-b border-gray-200 h-[60px] z-10">
+            <div class="flex items-center">
+                <!-- Botão Voltar (Mobile) -->
+                <button class="md:hidden mr-2 text-gray-600" id="back-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+
+                <div class="w-10 h-10 rounded-full overflow-hidden mr-3 cursor-pointer">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='25' fill='%2386efac'/%3E%3Cpath d='M30 60 Q50 75 70 60' stroke='%2322c55e' stroke-width='3' fill='none'/%3E%3Ccircle cx='40' cy='35' r='3' fill='%23166534'/%3E%3Ccircle cx='60' cy='35' r='3' fill='%23166534'/%3E%3C/svg%3E"
+                        alt="Clóvis" class="w-full h-full object-cover bg-white">
+                </div>
+                <div class="flex flex-col justify-center cursor-pointer">
+                    <h2 class="font-semibold text-gray-900 text-sm leading-tight">Clóvis (IA)</h2>
+                    <span class="text-xs text-gray-500">online</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-gray-500">
+                <button title="Pesquisar"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg></button>
+                <button title="Mais opções"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg></button>
+            </div>
+        </header>
+
+        <!-- Área de Mensagens -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar chat-background p-4 md:p-8 flex flex-col"
+            id="chat-messages">
+            <!-- Aviso de Criptografia (Estilo WhatsApp) -->
+            <div class="flex justify-center mb-6">
+                <div
+                    class="bg-[#ffeecd] text-[#54656f] text-xs px-3 py-1.5 rounded-lg shadow-sm text-center max-w-[90%]">
+                    🔒 As mensagens são geradas por IA e processadas de forma segura.
+                </div>
+            </div>
+
+            <!-- Mensagem Inicial -->
+            <div class="message-bubble msg-received animate-fade-in self-start">
+                <div class="font-bold text-[#0076bb] text-xs mb-1">Clóvis</div>
+                <div>Olá! Sou seu assistente de dados do Estágio Probatório. Como posso ajudar você hoje? 👋</div>
+                <div class="text-[10px] text-gray-500 text-right mt-1">Agora</div>
+            </div>
+
+            <!-- Container de Sugestões -->
+            <div id="suggestions-container" class="flex flex-wrap gap-2 mt-4 justify-center w-full max-w-2xl mx-auto">
+                <!-- Sugestões injetadas via JS -->
+            </div>
+        </div>
+
+        <!-- Área de Input -->
+        <footer class="bg-[#f0f2f5] p-3 flex items-end gap-2 z-10">
+            <button class="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
+            <button class="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+            </button>
+
+            <form id="chat-form"
+                class="flex-1 bg-white rounded-lg flex items-center px-4 py-2 shadow-sm border border-white focus-within:border-gray-300 transition-colors">
+                <input type="text" id="message-input" placeholder="Digite uma mensagem"
+                    class="flex-1 bg-transparent focus:outline-none text-gray-700 max-h-24 overflow-y-auto"
+                    autocomplete="off">
+            </form>
+
+            <button id="send-button"
+                class="p-3 bg-[#0076bb] text-white rounded-full hover:bg-[#005a8f] transition-colors shadow-sm flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                        d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+            </button>
+        </footer>
+    </main>
 
     <!-- JavaScript -->
     <script src="public/js/chat.js"></script>
+    <script>
+        // Toggle Sidebar Mobile
+        const backButton = document.getElementById('back-button');
+        const sidebar = document.getElementById('sidebar');
+
+        if (window.innerWidth < 768) {
+            // Lógica para mobile se necessário
+        }
+    </script>
 </body>
 
 </html>

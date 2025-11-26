@@ -143,6 +143,7 @@ router.get('/health', async (req, res) => {
             success: true,
             status: 'healthy',
             timestamp: new Date().toISOString(),
+            service_account: bigqueryService.getServiceAccountEmail(),
             services: {
                 gemini: process.env.GEMINI_API_KEY ? 'configured' : 'not configured',
                 bigquery: process.env.GCP_PROJECT_ID ? 'configured' : 'not configured'

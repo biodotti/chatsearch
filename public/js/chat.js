@@ -16,23 +16,22 @@ let isProcessing = false;
  */
 function addMessage(text, type = 'user') {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message message-${type} max-w-[80%] rounded-lg p-4`;
+    const isUser = type === 'user';
 
-    if (type === 'user') {
-        messageDiv.classList.add('self-end', 'ml-auto');
-    } else {
-        messageDiv.classList.add('self-start');
+    // Classes base para o balão
+    messageDiv.className = `message-bubble animate-fade-in ${isUser ? 'msg-sent' : 'msg-received'}`;
+
+    // Conteúdo da mensagem
+    let contentHtml = '';
+
+    if (!isUser) {
+        contentHtml += `<div class="font-bold text-[#0076bb] text-xs mb-1">Clóvis</div>`;
     }
 
-    const header = document.createElement('p');
-    header.className = 'font-semibold mb-1';
-    header.textContent = type === 'user' ? '👤 Você' : '🤖 Assistente IA';
+    contentHtml += `<div>${text}</div>`;
+    contentHtml += `<div class="text-[10px] ${isUser ? 'text-blue-100' : 'text-gray-500'} text-right mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`;
 
-    const content = document.createElement('p');
-    content.textContent = text;
-
-    messageDiv.appendChild(header);
-    messageDiv.appendChild(content);
+    messageDiv.innerHTML = contentHtml;
     chatMessages.appendChild(messageDiv);
 
     // Scroll para o final
@@ -45,14 +44,14 @@ function addMessage(text, type = 'user') {
 function showTypingIndicator() {
     const typingDiv = document.createElement('div');
     typingDiv.id = 'typing-indicator';
-    typingDiv.className = 'message message-ai max-w-[80%] rounded-lg p-4 self-start';
+    typingDiv.className = 'message-bubble msg-received animate-fade-in self-start';
 
     typingDiv.innerHTML = `
-        <p class="font-semibold mb-1">🤖 Assistente IA</p>
-        <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
+        <div class="font-bold text-[#0076bb] text-xs mb-1">Clóvis</div>
+        <div class="flex gap-1 py-1">
+            <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
         </div>
     `;
 
@@ -160,11 +159,12 @@ async function loadSuggestions() {
  * Exibe sugestões de perguntas
  */
 function displaySuggestions(suggestions) {
-    suggestionsContainer.innerHTML = '<p class="text-gray-400 text-sm mb-2 w-full">💡 Sugestões de perguntas:</p>';
+    suggestionsContainer.innerHTML = ''; // Limpar anteriores
 
     suggestions.forEach(suggestion => {
         const button = document.createElement('button');
-        button.className = 'suggestion-btn px-4 py-2 rounded-lg text-sm transition-all';
+        // Estilo "chip" arredondado
+        button.className = 'bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-gray-50 transition-colors shadow-sm';
         button.textContent = suggestion;
         button.onclick = () => {
             messageInput.value = suggestion;
