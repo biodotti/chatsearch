@@ -23,10 +23,27 @@ async function generateSQLQuery(userQuestion, schema) {
 
         const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
+        // Para evitar prompts excessivamente grandes, compactamos o schema
+        function compactSchema(inputSchema) {
+            try {
+                const out = { dataset: inputSchema.dataset, project: inputSchema.project, tables: {} };
+                for (const [tableName, tableInfo] of Object.entries(inputSchema.tables || {})) {
+                    out.tables[tableName] = {
+                        fields: (tableInfo.fields || []).slice(0, 8).map(f => ({ name: f.name, type: f.type }))
+                    };
+                }
+                return out;
+            } catch (e) {
+                return { dataset: inputSchema.dataset || '', project: inputSchema.project || '', tables: Object.keys(inputSchema.tables || {}) };
+            }
+        }
+
+        const smallSchema = compactSchema(schema);
+
         const prompt = `Você é um assistente especializado em gerar queries SQL para BigQuery.
 
-SCHEMA DO BANCO DE DADOS:
-${JSON.stringify(schema, null, 2)}
+SCHEMA DO BANCO DE DADOS (resumido):
+${JSON.stringify(smallSchema, null, 2)}
 
 REGRAS IMPORTANTES:
 1. Gere APENAS a query SQL, sem explicações ou texto adicional
@@ -233,10 +250,25 @@ async function generateSuggestions(schema) {
     try {
         const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
-        const prompt = `Com base no seguinte schema de banco de dados, gere 4 sugestões de perguntas inteligentes que um usuário poderia fazer. As sugestões devem ser práticas, úteis e variadas.
+        // Usar schema compactado para evitar prompts muito grandes
+        function compactSchemaForSuggestions(inputSchema) {
+            try {
+                const out = { dataset: inputSchema.dataset, tables: {} };
+                for (const [tableName, tableInfo] of Object.entries(inputSchema.tables || {})) {
+                    out.tables[tableName] = (tableInfo.fields || []).slice(0, 6).map(f => f.name);
+                }
+                return out;
+            } catch (e) {
+                return { dataset: inputSchema.dataset || '', tables: Object.keys(inputSchema.tables || {}) };
+            }
+        }
 
-SCHEMA:
-${JSON.stringify(schema, null, 2)}
+        const smallSchema = compactSchemaForSuggestions(schema);
+
+        const prompt = `Com base no seguinte schema de banco de dados (resumido), gere 4 sugestões de perguntas inteligentes que um usuário poderia fazer. As sugestões devem ser práticas, úteis e variadas.
+
+SCHEMA (resumido):
+${JSON.stringify(smallSchema, null, 2)}
 
 Retorne as sugestões como um array JSON simples com strings, nada mais. Exemplo: ["Pergunta 1", "Pergunta 2", "Pergunta 3", "Pergunta 4"]
 
