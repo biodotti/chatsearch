@@ -21,16 +21,15 @@ async function getModelName() {
     }
 
     // LISTA ATUALIZADA (2025)
-    // Prioridade: Pro (Inteligência + Estabilidade) -> 1.5 Flash (Velocidade) -> Legado
+    // Prioridade: 2.5 Flash (Modelo atual recomendado) -> Fallbacks
         const candidates = [
             process.env.GEMINI_MODEL, // opcional override via env
-            // Preferir modelo mais inteligente e estável (melhor para SQL)
-            'gemini-1.5-pro',
-            'gemini-1.5-flash',
-            // Fallbacks para quando 1.5 não está disponível
+            // Usar gemini-2.5-flash (modelo atual, 1.5-flash foi descontinuado)
+            'gemini-2.5-flash',
+            'models/gemini-2.5-flash',
             'gemini-2.5-flash-lite',
             'models/gemini-2.5-flash-lite',
-            // Outros
+            // Fallbacks antigos
             'gemini-pro',
             'gemini-1',
             'gemini-1.0',
