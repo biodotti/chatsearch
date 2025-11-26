@@ -9,6 +9,60 @@ if (!process.env.GEMINI_API_KEY) {
     console.warn('Configure GEMINI_API_KEY no painel do Render para que o chat funcione corretamente.');
 }
 
+// Detectar e cachear um modelo compatível (evita hardcode que pode quebrar entre versões)
+let _cachedModelName = null;
+async function getModelName() {
+    if (_cachedModelName) return _cachedModelName;
+
+    const candidates = [
+        process.env.GEMINI_MODEL, // opcional override via env
+        'gemini-pro',
+        'gemini-1',
+        'gemini-1.0',
+        'models/gemini-1.0',
+        'text-bison@001',
+        'text-bison-001',
+        'chat-bison@001',
+        'chat-bison'
+    ].filter(Boolean);
+
+    // 1) Tentar listar modelos se API expõe essa função
+    try {
+        if (typeof genAI.listModels === 'function') {
+            const list = await genAI.listModels();
+            const modelsList = (list && (list.models || list)) || [];
+            const names = modelsList.map(m => (m && (m.name || m.model || m.id)) || String(m));
+            const prefer = names.find(n => /gemini|bison|chat/i.test(n));
+            if (prefer) {
+                _cachedModelName = prefer;
+                console.log('✅ Gemini: selecionado modelo via listModels ->', _cachedModelName);
+                return _cachedModelName;
+            }
+        }
+    } catch (err) {
+        console.warn('⚠️ Gemini listModels falhou:', err && (err.message || err));
+    }
+
+    // 2) Tentar candidatos na ordem até encontrar um que responda sem 404
+    for (const candidate of candidates) {
+        try {
+            const model = genAI.getGenerativeModel({ model: candidate });
+            // Fazer uma chamada rápida e curta para validar o modelo
+            const probe = await model.generateContent('Responda apenas: OK');
+            // aguardar a resposta pode falhar para modelos que não suportam generateContent
+            await probe.response;
+            _cachedModelName = candidate;
+            console.log('✅ Gemini: selecionado modelo candidato ->', _cachedModelName);
+            return _cachedModelName;
+        } catch (err) {
+            console.warn('Modelo candidato falhou:', candidate, err && (err.message || err));
+            continue;
+        }
+    }
+
+    throw new Error('Nenhum modelo Gemini compatível encontrado. Verifique GEMINI_API_KEY/GEMINI_MODEL e versão da biblioteca.');
+}
+
 /**
  * Processa uma pergunta do usuário e gera uma query SQL para BigQuery
  * @param {string} userQuestion - Pergunta do usuário em linguagem natural
@@ -21,7 +75,8 @@ async function generateSQLQuery(userQuestion, schema) {
             throw new Error('GEMINI_API_KEY não está configurada. Configure no painel do Render.');
         }
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const modelName = await getModelName();
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         // Para evitar prompts excessivamente grandes, compactamos o schema
         function compactSchema(inputSchema) {
@@ -80,7 +135,8 @@ QUERY SQL:`;
  */
 async function formatResponse(userQuestion, queryResults) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const modelName = await getModelName();
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         const prompt = `Você é um assistente amigável do sistema Estágio Probatório Play.
 
@@ -117,7 +173,8 @@ RESPOSTA:`;
  */
 async function processGeneralQuestion(userQuestion) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const modelName = await getModelName();
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         const prompt = `Você é um assistente amigável do sistema Estágio Probatório Play, uma plataforma educacional com jogos formativos.
 
@@ -149,7 +206,8 @@ RESPOSTA:`;
  */
 async function requiresDatabaseQuery(userQuestion) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const modelName = await getModelName();
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         const prompt = `Analise se a pergunta abaixo requer consulta a um banco de dados ou pode ser respondida como uma conversa geral.
 
@@ -253,7 +311,8 @@ async function processMessage(userQuestion, schema, executeQueryFunc) {
  */
 async function generateSuggestions(schema) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const modelName = await getModelName();
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         // Usar schema compactado para evitar prompts muito grandes
         function compactSchemaForSuggestions(inputSchema) {
