@@ -157,9 +157,107 @@ RESPOSTA (SIM ou NÃO):`;
     }
 }
 
+/**
+ * Processa uma mensagem do usuário: detecta se é pergunta sobre dados e processa com Gemini + BigQuery
+ * @param {string} userQuestion - Pergunta do usuário
+ * @param {Object} schema - Schema das tabelas do BigQuery
+ * @param {Function} executeQueryFunc - Função para executar queries no BigQuery
+ * @returns {Promise<Object>} Resultado com success, message, sql e data
+ */
+async function processMessage(userQuestion, schema, executeQueryFunc) {
+    try {
+        // Detectar se requer consulta ao BD
+        const needsDatabase = await requiresDatabaseQuery(userQuestion);
+
+        if (!needsDatabase) {
+            // Resposta geral, sem dados
+            const response = await processGeneralQuestion(userQuestion);
+            return {
+                success: true,
+                message: response,
+                sql: null,
+                data: null,
+                type: 'general'
+            };
+        }
+
+        // Gerar SQL com Gemini
+        const sqlQuery = await generateSQLQuery(userQuestion, schema);
+
+        // Verificar se gerou erro
+        if (sqlQuery.includes('ERRO:')) {
+            return {
+                success: false,
+                message: sqlQuery,
+                sql: null,
+                data: null,
+                type: 'error'
+            };
+        }
+
+        // Executar query no BigQuery
+        const queryResults = await executeQueryFunc(sqlQuery);
+
+        // Formatar resposta com Gemini
+        const formattedResponse = await formatResponse(userQuestion, queryResults);
+
+        return {
+            success: true,
+            message: formattedResponse,
+            sql: sqlQuery,
+            data: queryResults,
+            type: 'data'
+        };
+    } catch (error) {
+        console.error('Erro ao processar mensagem com Gemini:', error);
+        throw error;
+    }
+}
+
+/**
+ * Gera sugestões de perguntas baseadas no schema do BigQuery
+ * @param {Object} schema - Schema das tabelas do BigQuery
+ * @returns {Promise<Array>} Array de sugestões de perguntas
+ */
+async function generateSuggestions(schema) {
+    try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+        const prompt = `Com base no seguinte schema de banco de dados, gere 4 sugestões de perguntas inteligentes que um usuário poderia fazer. As sugestões devem ser práticas, úteis e variadas.
+
+SCHEMA:
+${JSON.stringify(schema, null, 2)}
+
+Retorne as sugestões como um array JSON simples com strings, nada mais. Exemplo: ["Pergunta 1", "Pergunta 2", "Pergunta 3", "Pergunta 4"]
+
+SUGESTÕES:`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let suggestionsText = response.text().trim();
+
+        // Remover markdown code blocks se existirem
+        suggestionsText = suggestionsText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+        // Tentar parsear como JSON
+        try {
+            const suggestions = JSON.parse(suggestionsText);
+            return Array.isArray(suggestions) ? suggestions : [suggestionsText];
+        } catch {
+            // Se não for JSON válido, retornar como string única
+            return [suggestionsText];
+        }
+    } catch (error) {
+        console.error('Erro ao gerar sugestões com Gemini:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     generateSQLQuery,
     formatResponse,
     processGeneralQuestion,
-    requiresDatabaseQuery
+    requiresDatabaseQuery,
+    processMessage,
+    generateSuggestions
 };
