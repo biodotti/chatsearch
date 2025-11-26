@@ -46,12 +46,37 @@ app.use(express.static(__dirname));
 app.use('/api/chat', chatRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-    });
+app.get('/api/health', async (req, res) => {
+    try {
+        const bigqueryService = require('./services/bigquery');
+        
+        // Tentar testar conexão com BigQuery
+        let bigqueryStatus = 'not configured';
+        try {
+            await bigqueryService.testConnection();
+            bigqueryStatus = 'configured';
+        } catch (error) {
+            console.error('BigQuery test error:', error.message);
+            bigqueryStatus = `error: ${error.message}`;
+        }
+
+        res.json({
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'development',
+            services: {
+                gemini: process.env.GEMINI_API_KEY ? 'configured' : 'not configured',
+                bigquery: bigqueryStatus
+            }
+        });
+    } catch (error) {
+        console.error('Health check error:', error);
+        res.status(500).json({
+            status: 'error',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 
 // Rota padrão para servir index.html
