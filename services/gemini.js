@@ -20,16 +20,16 @@ async function getModelName() {
         return _cachedModelName;
     }
 
-    // Cache expirou ou vazio — tentar detectar novo modelo
-    // Prioridade: Flash (Rapidez) -> Pro (Inteligência) -> 1.0 (Legado Estável)
+    // LISTA ATUALIZADA (2025)
+    // Prioridade: Pro (Inteligência + Estabilidade) -> 1.5 Flash (Velocidade) -> Legado
         const candidates = [
             process.env.GEMINI_MODEL, // opcional override via env
-            // Preferir modelo mais barato e eficiente
-            'gemini-2.5-flash-lite',
-            'models/gemini-2.5-flash-lite',
-            // Fallbacks quando flash-lite está sobrecarregado
+            // Preferir modelo mais inteligente e estável (melhor para SQL)
             'gemini-1.5-pro',
             'gemini-1.5-flash',
+            // Fallbacks para quando 1.5 não está disponível
+            'gemini-2.5-flash-lite',
+            'models/gemini-2.5-flash-lite',
             // Outros
             'gemini-pro',
             'gemini-1',
