@@ -236,8 +236,13 @@ async function processMessage(userQuestion, schema, executeQueryFunc) {
             type: 'data'
         };
     } catch (error) {
-        console.error('Erro ao processar mensagem com Gemini:', error);
-        throw error;
+        console.error('Erro ao processar mensagem com Gemini:', error && (error.stack || error.message || error));
+        // Retornar erro estruturado para a rota consumir e exibir mensagem amigável
+        return {
+            success: false,
+            message: 'Erro ao processar sua pergunta com IA',
+            error: (error && error.message) ? error.message : 'Erro desconhecido'
+        };
     }
 }
 
