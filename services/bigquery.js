@@ -91,13 +91,14 @@ async function executeQuery(sql) {
 
         console.log('Executando query:', sql);
 
-        // Executar query
+        // Executar query com localização dinâmica (padrão: southamerica-east1 para Brasil, fallback: US)
+        const location = process.env.BIGQUERY_LOCATION || 'southamerica-east1';
         const [rows] = await bigquery.query({
             query: sql,
-            location: 'US', // Ajuste conforme a localização do seu dataset
+            location: location,
         });
 
-        console.log(`Query retornou ${rows.length} linhas`);
+        console.log(`Query retornou ${rows.length} linhas (location: ${location})`);
 
         return rows;
     } catch (error) {
