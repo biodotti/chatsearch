@@ -9,13 +9,18 @@ if (!process.env.GEMINI_API_KEY) {
     console.warn('Configure GEMINI_API_KEY no painel do Render para que o chat funcione corretamente.');
 }
 
-// Cache do nome do modelo
+// Cache do nome do modelo (reseta a cada 5 minutos para evitar ficar preso em modelo sobrecarregado)
 let _cachedModelName = null;
+let _cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 async function getModelName() {
-    if (_cachedModelName) return _cachedModelName;
+    // Verificar se cache ainda é válido
+    if (_cachedModelName && _cacheTimestamp && (Date.now() - _cacheTimestamp < CACHE_DURATION)) {
+        return _cachedModelName;
+    }
 
-    // LISTA ATUALIZADA (2025)
+    // Cache expirou ou vazio — tentar detectar novo modelo
     // Prioridade: Flash (Rapidez) -> Pro (Inteligência) -> 1.0 (Legado Estável)
         const candidates = [
             process.env.GEMINI_MODEL, // opcional override via env
@@ -45,6 +50,7 @@ async function getModelName() {
             await probe.response;
             
             _cachedModelName = candidate;
+            _cacheTimestamp = Date.now(); // Registrar timestamp do cache
             console.log('✅ Gemini: selecionado modelo ->', _cachedModelName);
             return _cachedModelName;
         } catch (err) {
@@ -65,6 +71,7 @@ async function getModelName() {
             );
             if (fallback) {
                 _cachedModelName = fallback.name.replace('models/', '');
+                _cacheTimestamp = Date.now(); // Registrar timestamp do cache
                 console.log('✅ Gemini: selecionado fallback via listModels ->', _cachedModelName);
                 return _cachedModelName;
             }
