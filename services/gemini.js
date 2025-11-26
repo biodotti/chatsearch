@@ -365,5 +365,6 @@ module.exports = {
     processGeneralQuestion,
     requiresDatabaseQuery,
     processMessage,
-    generateSuggestions
+    generateSuggestions,
+    getModelName
 };

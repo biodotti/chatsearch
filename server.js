@@ -108,6 +108,18 @@ app.get('/api/debug/credentials-status', (req, res) => {
     }
 });
 
+// Debug: mostrar qual modelo Gemini foi selecionado (não expõe chaves)
+app.get('/api/debug/gemini-model', async (req, res) => {
+    try {
+        const geminiService = require('./services/gemini');
+        const modelName = await geminiService.getModelName();
+        res.json({ success: true, model: modelName });
+    } catch (error) {
+        console.error('Erro ao obter modelo Gemini:', error && (error.message || error));
+        res.status(500).json({ success: false, error: error.message || 'Erro desconhecido' });
+    }
+});
+
 // Rota padrão para servir index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
