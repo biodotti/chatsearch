@@ -135,7 +135,7 @@ async function formatResponse(userQuestion, queryResults) {
     try {
         const modelName = await getModelName();
         
-        const systemInstruction = `Você é o assistente do sistema "Estágio Probatório Play".
+        const systemInstruction = `Você é o assistente do sistema "Estágio Probatório".
         Seja amigável, direto e use emojis.
         Analise os DADOS fornecidos e responda à PERGUNTA do usuário.`;
 
@@ -162,7 +162,7 @@ async function processGeneralQuestion(userQuestion) {
         const modelName = await getModelName();
         const model = genAI.getGenerativeModel({ 
             model: modelName,
-            systemInstruction: "Você é um assistente amigável do sistema educacional 'Estágio Probatório Play'. O sistema tem jogos (Space Invaders, Tetris) e métricas. Se perguntarem de dados específicos, peça para serem mais detalhados."
+            systemInstruction: "Você é um assistente amigável do sistema educacional 'Estágio Probatório'. O sistema tem jogos (Space Invaders, Tetris) e métricas. Se perguntarem de dados específicos, peça para serem mais detalhados."
         });
 
         const result = await model.generateContent(userQuestion);

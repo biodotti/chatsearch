@@ -1,4 +1,4 @@
-# 💬 Chat IA - Estágio Probatório Play
+# 💬 Chat IA - Estágio Probatório
 
 Aplicativo de chat inteligente que integra **Gemini AI** para processamento de linguagem natural e **BigQuery** para consulta de dados do Looker Studio.
 
@@ -6,7 +6,7 @@ Aplicativo de chat inteligente que integra **Gemini AI** para processamento de l
 
 - **IA Conversacional**: Gemini AI processa perguntas em linguagem natural
 - **Consultas Inteligentes**: Gera automaticamente queries SQL para BigQuery
-- **Interface Moderna**: Design integrado ao Estágio Probatório Play
+- **Interface Moderna**: Design integrado ao Estágio Probatório
 - **Segurança**: Rate limiting, validação de queries e proteção contra SQL injection
 - **Sugestões Inteligentes**: Sugestões de perguntas baseadas no schema dos dados
 
@@ -200,7 +200,7 @@ OBS: Se as credenciais de service account foram comitadas acidentalmente neste r
 
 ## 📝 Licença
 
-© 2025 Estágio Probatório Play. Todos os direitos reservados.
+© 2025 Estágio Probatório. Todos os direitos reservados.
 
 ## 🤝 Suporte
 
