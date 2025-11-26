@@ -1,7 +1,13 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Inicializar Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+// Validar se a chave está configurada
+if (!process.env.GEMINI_API_KEY) {
+    console.warn('⚠️  Aviso: GEMINI_API_KEY não está configurada!');
+    console.warn('Configure GEMINI_API_KEY no painel do Render para que o chat funcione corretamente.');
+}
 
 /**
  * Processa uma pergunta do usuário e gera uma query SQL para BigQuery
@@ -11,6 +17,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  */
 async function generateSQLQuery(userQuestion, schema) {
     try {
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error('GEMINI_API_KEY não está configurada. Configure no painel do Render.');
+        }
+
         const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
         const prompt = `Você é um assistente especializado em gerar queries SQL para BigQuery.

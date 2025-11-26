@@ -2,6 +2,7 @@ const { BigQuery } = require('@google-cloud/bigquery');
 
 // Inicializar cliente BigQuery
 let bigquery;
+let credentialsConfigured = false;
 
 if (process.env.GOOGLE_CREDENTIALS) {
     // Em produção (Render, Vercel, etc) - credenciais via variável de ambiente
@@ -11,21 +12,29 @@ if (process.env.GOOGLE_CREDENTIALS) {
             projectId: process.env.GCP_PROJECT_ID,
             credentials: credentials
         });
+        credentialsConfigured = true;
         console.log('✅ BigQuery inicializado com GOOGLE_CREDENTIALS');
     } catch (error) {
-        console.error('❌ Erro ao parsear GOOGLE_CREDENTIALS:', error);
-        throw new Error('Credenciais do Google Cloud inválidas');
+        console.error('❌ Erro ao parsear GOOGLE_CREDENTIALS:', error.message);
+        bigquery = null;
     }
 } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     // Em desenvolvimento local - credenciais via arquivo
-    bigquery = new BigQuery({
-        projectId: process.env.GCP_PROJECT_ID,
-        keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
-    });
-    console.log('✅ BigQuery inicializado com arquivo de credenciais');
+    try {
+        bigquery = new BigQuery({
+            projectId: process.env.GCP_PROJECT_ID,
+            keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
+        });
+        credentialsConfigured = true;
+        console.log('✅ BigQuery inicializado com arquivo de credenciais');
+    } catch (error) {
+        console.error('❌ Erro ao inicializar BigQuery com arquivo:', error.message);
+        bigquery = null;
+    }
 } else {
-    console.error('❌ Nenhuma credencial do Google Cloud configurada!');
-    throw new Error('Configure GOOGLE_CREDENTIALS ou GOOGLE_APPLICATION_CREDENTIALS');
+    console.warn('⚠️  Aviso: Nenhuma credencial do Google Cloud configurada!');
+    console.warn('Configure GOOGLE_CREDENTIALS (recomendado) ou GOOGLE_APPLICATION_CREDENTIALS');
+    bigquery = null;
 }
 
 /**
@@ -71,6 +80,10 @@ function validateQuery(sql) {
  */
 async function executeQuery(sql) {
     try {
+        if (!bigquery || !credentialsConfigured) {
+            throw new Error('BigQuery não está configurado. Verifique se as credenciais foram definidas nas variáveis de ambiente.');
+        }
+
         // Validar query antes de executar
         if (!validateQuery(sql)) {
             throw new Error('Query SQL não permitida. Apenas comandos SELECT são aceitos.');
@@ -95,8 +108,8 @@ async function executeQuery(sql) {
             throw new Error('Tabela não encontrada no BigQuery. Verifique o nome da tabela.');
         } else if (error.message.includes('Syntax error')) {
             throw new Error('Erro de sintaxe na query SQL. Por favor, reformule sua pergunta.');
-        } else if (error.message.includes('Permission denied')) {
-            throw new Error('Sem permissão para acessar os dados. Verifique as credenciais.');
+        } else if (error.message.includes('Permission denied') || error.message.includes('Access Denied')) {
+            throw new Error('Sem permissão para acessar os dados. Verifique as credenciais e permissões da service account.');
         }
 
         throw new Error('Erro ao consultar dados: ' + error.message);
@@ -179,6 +192,10 @@ async function getDatasetSchema() {
  */
 async function testConnection() {
     try {
+        if (!bigquery || !credentialsConfigured) {
+            throw new Error('BigQuery não está configurado. Verifique se GOOGLE_CREDENTIALS está definido nas variáveis de ambiente do Render.');
+        }
+
         const dataset = bigquery.dataset(process.env.BIGQUERY_DATASET);
         const [exists] = await dataset.exists();
 
@@ -189,7 +206,7 @@ async function testConnection() {
         console.log('✅ Conexão com BigQuery OK');
         return true;
     } catch (error) {
-        console.error('❌ Erro na conexão com BigQuery:', error);
+        console.error('❌ Erro na conexão com BigQuery:', error.message);
         throw error;
     }
 }
