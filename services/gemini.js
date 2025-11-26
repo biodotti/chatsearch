@@ -101,20 +101,25 @@ async function generateSQLQuery(userQuestion, schema) {
 
         const smallSchema = compactSchema(schema);
 
-        // Instruções de Sistema (System Instruction)
+        // Instruções simples e diretas para geração de SQL
         const systemInstruction = `Você é um especialista em BigQuery SQL.
-        
-SCHEMA (${Object.keys(smallSchema.tables || {}).length} tabelas):
-${JSON.stringify(smallSchema)}
 
-REGRAS:
-1. Tabelas disponíveis: ${Object.keys(smallSchema.tables || {}).join(', ')}
-2. Gere APENAS código SQL puro, sem explicações ou Markdown.
-3. Use nomes totalmente qualificados: \`dashboard-educacao-ep-pr.dados_formacao.tabela\`
-4. Sempre use LIMIT 100 no final.
-5. Se impossível responder, retorne: "ERRO: [Razão]"
-6. Suporte operações: COUNT, SUM, AVG, GROUP BY, ORDER BY, WHERE, JOINs.
-7. Data atual: ${new Date().toISOString().split('T')[0]}`;
+Você tem acesso a estas tabelas no dataset dados_formacao:
+${Object.keys(smallSchema.tables || {}).join(', ')}
+
+Aqui estão as colunas disponíveis:
+${JSON.stringify(smallSchema, null, 2)}
+
+INSTRUÇÕES IMPORTANTES:
+1. Responda APENAS com SQL puro. Sem explicações, sem Markdown, sem backticks.
+2. Use \`dashboard-educacao-ep-pr.dados_formacao.nome_tabela\` nos FROM.
+3. Sempre adicione LIMIT 100 ao final.
+4. Se não conseguir gerar SQL válido, responda: ERRO: [razão breve]
+
+Exemplos de queries válidas:
+- SELECT COUNT(*) AS total FROM \`dashboard-educacao-ep-pr.dados_formacao.tb_educacao_especial\`
+- SELECT * FROM \`dashboard-educacao-ep-pr.dados_formacao.tb_painel_final_rapido\` LIMIT 100
+`;
 
         const model = genAI.getGenerativeModel({ 
             model: modelName,
@@ -130,8 +135,8 @@ REGRAS:
 
         return sqlQuery;
     } catch (error) {
-        console.error('Erro SQL Gemini:', error);
-        return "ERRO: Falha na geração da query.";
+        console.error('Erro SQL Gemini:', error && (error.message || error));
+        throw new Error('Erro ao gerar query: ' + (error && error.message ? error.message : 'desconhecido'));
     }
 }
 
