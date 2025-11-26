@@ -156,6 +156,19 @@ Health check da API
 2. Configure variáveis de ambiente no painel
 3. Inicie com `npm start` ou configure PM2
 
+### Opção 4: Render
+
+1. No painel do Render, crie um novo serviço do tipo `Web Service` apontando para este repositório.
+2. Defina as variáveis de ambiente necessárias no painel de Environment (ou use segredos):
+  - `GEMINI_API_KEY` = sua chave Gemini
+  - `GCP_PROJECT_ID` = seu projeto GCP
+  - `BIGQUERY_DATASET` = nome do dataset
+  - `GOOGLE_CREDENTIALS` = o conteúdo do JSON da service account (formato inteiro, como string)
+3. No `Build Command` deixe `npm ci --production` e `Start Command` como `npm start`.
+4. Deploy e monitore o endpoint de health: `https://<seu-servico>.onrender.com/api/health`
+
+OBS: Se as credenciais de service account foram comitadas acidentalmente neste repositório, revogue-as imediatamente no Google Cloud Console e substitua por novas credenciais armazenadas como segredo no Render.
+
 ## 🔒 Segurança
 
 - ✅ Rate limiting (20 requisições/minuto)
